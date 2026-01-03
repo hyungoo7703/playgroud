@@ -8,6 +8,7 @@
   import EventList from './routes/EventList.svelte';
   import Settings from './routes/Settings.svelte';
   import PensionCalculator from './routes/PensionCalculator.svelte';
+  import FoodSpinner from './routes/FoodSpinner.svelte';
 </script>
 
 <div class="relative min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -21,6 +22,8 @@
       <EventList />
     {:else if $currentPage === 'pension-calculator'}
       <PensionCalculator />
+    {:else if $currentPage === 'food-spinner'}
+      <FoodSpinner />
     {:else if $currentPage === 'settings'}
       <Settings />
     {/if}

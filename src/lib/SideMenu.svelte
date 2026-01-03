@@ -14,6 +14,7 @@
     { id: 'home', title: '홈' },
     { id: 'events', title: '가족 일정' },
     { id: 'pension-calculator', title: '연금저축펀드 계산기' },
+    { id: 'food-spinner', title: '오늘 뭐 먹지?' },
     { id: 'settings', title: '설정' }
   ];
 </script>
