@@ -49,10 +49,10 @@
   });
 </script>
 
-<section id="food-spinner" class="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg text-center">
+<section id="food-spinner" class="p-6 bg-white dark:bg-gray-800 shadow-md rounded-2xl text-center">
   <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-200">오늘 뭐 먹지? 돌림판</h2>
   
-  <div class="my-8 p-8 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-inner">
+  <div class="my-8 p-8 bg-gray-100 dark:bg-gray-700 rounded-xl shadow-inner">
     <p class="text-4xl font-extrabold text-blue-600 dark:text-blue-400 h-16 flex items-center justify-center transition-all duration-100">
       {result}
     </p>
@@ -61,7 +61,7 @@
   <button 
     on:click={startSpin}
     disabled={spinning}
-    class="w-full py-4 px-6 text-xl font-bold text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+    class="w-full py-4 px-6 text-xl font-bold text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
   >
     {spinning ? '돌아가는 중...' : '돌려!'}
   </button>

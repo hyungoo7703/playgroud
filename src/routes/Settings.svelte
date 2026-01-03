@@ -2,7 +2,7 @@
   import { isDarkMode } from '../lib/store.js';
 </script>
 
-<section id="settings" class="p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg mt-6">
+<section id="settings" class="p-6 bg-white dark:bg-gray-800 shadow-md rounded-2xl">
   <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">설정</h2>
   
   <div class="flex items-center justify-between">
