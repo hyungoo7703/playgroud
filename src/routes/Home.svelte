@@ -13,7 +13,10 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        redirect: 'follow',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
         body: JSON.stringify({ action: 'getEvents' })
       });
       const result = await response.json();

@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { Route, navigate, useLocation } from 'svelte-routing';
-  import { isLoggedIn } from './store.js';
+  import { deferredPrompt, isLoggedIn } from './store.js';
 
   import Header from './Header.svelte';
   import SideMenu from './SideMenu.svelte';
@@ -28,11 +28,29 @@
 
   // 2. 초기 마운트 시 실행
   onMount(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log("SW Registered!"))
+        .catch(err => console.error("SW Registration failed:", err));
+    }
     checkAuth();
   });
 
   // 3. 상태 변화(로그인 여부, 경로 변경) 시마다 체크
   $: $isLoggedIn, $location.pathname, checkAuth();
+
+  // 브라우저가 설치 가능함을 알릴 때 이벤트 저장
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault(); // 기본 팝업 방지
+      deferredPrompt.set(e); // 이벤트를 스토어에 저장
+    });
+
+    // 설치 완료 시 이벤트 초기화
+    window.addEventListener('appinstalled', () => {
+      deferredPrompt.set(null);
+    });
+  }
 </script>
 
 <div class="relative min-h-screen bg-gray-100 dark:bg-gray-900">

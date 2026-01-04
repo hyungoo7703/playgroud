@@ -19,7 +19,10 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        redirect: 'follow',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
         body: JSON.stringify({ action: 'getEvents' })
       });
       const result = await response.json();
@@ -62,7 +65,10 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        redirect: 'follow',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        },
         body: JSON.stringify(payload)
       });
       const result = await response.json();
@@ -93,8 +99,8 @@
   <div class="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-xl border-2 transition-all {editingId ? 'border-amber-400' : 'border-transparent'}">
     <div class="space-y-3">
       <div class="flex gap-2">
-        <input type="date" bind:value={newDate} class="flex-[2] p-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-sm border-none focus:ring-2 focus:ring-indigo-500" />
-        <select bind:value={newCategory} class="flex-1 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-sm border-none">
+        <input type="date" bind:value={newDate} class="flex-[2] p-3 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-xl text-sm border-none focus:ring-2 focus:ring-indigo-500" />
+        <select bind:value={newCategory} class="flex-1 p-3 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-xl text-sm border-none">
           <option>일반</option><option>외식</option><option>여행</option><option>경조사</option>
         </select>
       </div>
