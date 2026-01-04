@@ -1,0 +1,67 @@
+name: CI/CD for GitHub Pages
+
+on:
+  # main 브랜치에 푸시되거나 PR이 올 때 실행됩니다.
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+  # Actions 탭에서 수동으로 실행할 수 있게 합니다.
+  workflow_dispatch:
+
+# GitHub Pages 배포를 위한 권한 설정
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포 중복 방지 (기존 배포 취소 X, 새 배포 대기)
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. 소스 코드 가져오기
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. CI 확인 (기존 템플릿에 있던 Hello World 단계)
+      - name: Run a one-line script
+        run: echo "Starting Build and Deploy Process!"
+
+      # 3. Node.js 설정 및 의존성 설치
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      # 4. 프로젝트 빌드
+      - name: Build
+        run: npm run build
+
+      # 5. SPA(단일 페이지 앱)를 위한 404.html 처리
+      - name: Create 404.html for SPA
+        run: cp dist/index.html dist/404.html
+
+      # 6. 배포를 위한 아티팩트 업로드 (Push일 때만 실행 권장하나, 여기서는 단순 통합)
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./dist"
+
+      # 7. 실제 배포 (메인 브랜치에 푸시된 경우에만 실행되도록 조건 추가 가능)
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/deploy-pages@v4
