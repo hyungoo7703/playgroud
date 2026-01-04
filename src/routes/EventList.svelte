@@ -104,7 +104,7 @@
           <option>일반</option><option>외식</option><option>여행</option><option>경조사</option>
         </select>
       </div>
-      <input type="text" bind:value={newTitle} placeholder="내용을 입력하세요" class="w-full p-3 bg-gray-50 dark:bg-gray-900 rounded-xl text-sm border-none focus:ring-2 focus:ring-indigo-500" />
+      <input type="text" bind:value={newTitle} placeholder="내용을 입력하세요" class="w-full p-3 bg-gray-50 dark:bg-gray-900 dark:text-white rounded-xl text-sm border-none focus:ring-2 focus:ring-indigo-500" />
       
       <div class="flex gap-2 pt-2">
         {#if editingId}
