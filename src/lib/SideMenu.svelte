@@ -68,7 +68,7 @@
 <aside 
   class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform duration-300 
     {$isMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
-    lg:translate-x-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700"
+    bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700"
 >
   <div class="flex items-center justify-between p-4 lg:hidden">
     <span class="text-xl font-bold dark:text-white">메뉴</span>
