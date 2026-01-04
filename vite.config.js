@@ -8,6 +8,6 @@ export default defineConfig(({ command, mode }) => {
 
   return {
     plugins: [svelte()],
-    base: isProduction ? "playground" : "/",
+    base: isProduction ? "/playground/" : "/",
   };
 });
