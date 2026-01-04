@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { GAS_URL } from '../lib/store.js';
   
   let events = [];
   let isLoading = true;
@@ -12,8 +13,6 @@
   
   // 수정 모드 상태
   let editingId = null; 
-
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyXKahb3Xbi6B1IUXYVKrunW776GaPnS0LxbcQ4BycnzpXXkZiMMNwX4SVNuUA2ExfO/exec";
 
   async function fetchEvents() {
     isLoading = true;

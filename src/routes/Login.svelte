@@ -1,11 +1,10 @@
 <script>
   import { navigate } from 'svelte-routing';
+  import { isLoggedIn, GAS_URL } from '../lib/store.js';
 
   let accessCode = '';
   let isLoading = false;
   let errorMessage = '';
-
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyXKahb3Xbi6B1IUXYVKrunW776GaPnS0LxbcQ4BycnzpXXkZiMMNwX4SVNuUA2ExfO/exec";
 
   async function handleLogin() {
     if (!accessCode) {
@@ -17,10 +16,21 @@
     errorMessage = '';
 
     try {
-      const response = await fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({ password: accessCode }) 
-      });
+      const payload = {
+      action: 'login',
+      password: accessCode
+    };
+
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'cors', // CORS 모드 명시
+      headers: {
+        // 중요: 'Content-Type': 'application/json'을 절대 쓰지 마세요.
+        // 대신 텍스트로 보냅니다. (GAS는 어차피 e.postData.contents로 읽음)
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify(payload)
+    });
 
       const result = await response.json();
 
@@ -28,6 +38,8 @@
         localStorage.setItem('accessCode', accessCode);
         localStorage.setItem('userName', result.userName);
         localStorage.setItem('role', result.role);
+        
+        isLoggedIn.set(true); // 스토어 업데이트 (MainLayout의 {#if}가 즉시 바뀜)
         navigate('/', { replace: true });
       } else {
         errorMessage = result.message;

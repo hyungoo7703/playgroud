@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { fade, scale, slide } from 'svelte/transition';
+  import { GAS_URL } from '../lib/store.js';
 
   // --- 상태 관리 변수 ---
   let foodList = [];       // 구글 시트에서 가져온 메뉴 리스트
@@ -13,7 +14,6 @@
   let newItem = '';        // 추가할 새 메뉴 이름
   let isAdding = false;    // 메뉴 추가 통신 중 상태
   const userRole = localStorage.getItem('role'); // 로그인 시 저장된 역할 (admin/member)
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyXKahb3Xbi6B1IUXYVKrunW776GaPnS0LxbcQ4BycnzpXXkZiMMNwX4SVNuUA2ExfO/exec";
 
   /** * 1. 메뉴 리스트 가져오기 (Read)
    * CORS 방지를 위해 헤더를 생략하고 redirect 설정을 추가했습니다.

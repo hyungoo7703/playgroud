@@ -3,11 +3,11 @@
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { navigate } from 'svelte-routing';
+  import { GAS_URL } from '../lib/store.js';
 
   let monthlyEvents = [];
   let isLoading = true;
   const userName = localStorage.getItem('userName') || '가족';
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyXKahb3Xbi6B1IUXYVKrunW776GaPnS0LxbcQ4BycnzpXXkZiMMNwX4SVNuUA2ExfO/exec";
 
   onMount(async () => {
     try {
