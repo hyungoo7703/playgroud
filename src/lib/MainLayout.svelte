@@ -6,7 +6,6 @@
   import Header from './Header.svelte';
   import SideMenu from './SideMenu.svelte';
 
-  // Page Components
   import Home from '../routes/Home.svelte';
   import EventList from '../routes/EventList.svelte';
   import Settings from '../routes/Settings.svelte';
@@ -18,7 +17,7 @@
 
   const location = useLocation();
 
-  // 1. 로그인 상태를 체크하여 리다이렉트하는 함수
+  // 로그인 상태 및 경로 체크 함수 (백틱 사용하여 경로 수정)
   function checkAuth() {
     const loginPath = `${base}/login`;
     if (!$isLoggedIn && $location.pathname !== loginPath) {
@@ -26,27 +25,25 @@
     }
   }
 
-  // 2. 초기 마운트 시 실행
   onMount(() => {
+    // 서비스 워커 등록 경로 수정 (백틱 사용)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('${base}/sw.js')
+      navigator.serviceWorker.register(`${base}/sw.js`)
         .then(() => console.log("SW Registered!"))
         .catch(err => console.error("SW Registration failed:", err));
     }
     checkAuth();
   });
 
-  // 3. 상태 변화(로그인 여부, 경로 변경) 시마다 체크
+  // 로그인 여부나 경로가 바뀔 때마다 체크
   $: $isLoggedIn, $location.pathname, checkAuth();
 
-  // 브라우저가 설치 가능함을 알릴 때 이벤트 저장
+  // 설치 관련 이벤트
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault(); // 기본 팝업 방지
-      deferredPrompt.set(e); // 이벤트를 스토어에 저장
+      e.preventDefault();
+      deferredPrompt.set(e);
     });
-
-    // 설치 완료 시 이벤트 초기화
     window.addEventListener('appinstalled', () => {
       deferredPrompt.set(null);
     });
@@ -54,7 +51,7 @@
 </script>
 
 <div class="relative min-h-screen bg-gray-100 dark:bg-gray-900">
-  {#if $isLoggedIn && $location.pathname !== '${base}/login'}
+  {#if $isLoggedIn && $location.pathname !== `${base}/login`} 
     <Header />
     <SideMenu />
   {/if}
@@ -63,13 +60,13 @@
     {#if !$isLoggedIn}
       <Login />
     {:else}
-      <Route path="/" component={Home} />
-      <Route path="/events" component={EventList} />
-      <Route path="/pension-calculator" component={PensionCalculator} />
-      <Route path="/food-spinner" component={FoodSpinner} />
-      <Route path="/settings" component={Settings} />
-      <Route path="/bulletin-board" component={BulletinBoard} />
-      <Route path="/ledger" component={Ledger} />
+      <Route path="/" component={Home} /> 
+      <Route path="events" component={EventList} /> 
+      <Route path="pension-calculator" component={PensionCalculator} /> 
+      <Route path="food-spinner" component={FoodSpinner} /> 
+      <Route path="settings" component={Settings} /> 
+      <Route path="bulletin-board" component={BulletinBoard} /> 
+      <Route path="ledger" component={Ledger} />
     {/if}
   </main>
 </div>
