@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { Route, navigate, useLocation } from 'svelte-routing';
-  import { deferredPrompt, isLoggedIn } from './store.js';
+  import { base, deferredPrompt, isLoggedIn } from './store.js';
 
   import Header from './Header.svelte';
   import SideMenu from './SideMenu.svelte';
@@ -20,16 +20,16 @@
 
   // 1. 로그인 상태를 체크하여 리다이렉트하는 함수
   function checkAuth() {
-    // 로그인되지 않았는데 현재 경로가 /login이 아니면 강제로 이동
-    if (!$isLoggedIn && $location.pathname !== '/login') {
-      navigate('/login', { replace: true });
+    const loginPath = `${base}/login`;
+    if (!$isLoggedIn && $location.pathname !== loginPath) {
+      navigate(loginPath, { replace: true });
     }
   }
 
   // 2. 초기 마운트 시 실행
   onMount(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('${base}/sw.js')
         .then(() => console.log("SW Registered!"))
         .catch(err => console.error("SW Registration failed:", err));
     }
@@ -54,7 +54,7 @@
 </script>
 
 <div class="relative min-h-screen bg-gray-100 dark:bg-gray-900">
-  {#if $isLoggedIn && $location.pathname !== '/login'}
+  {#if $isLoggedIn && $location.pathname !== '${base}/login'}
     <Header />
     <SideMenu />
   {/if}

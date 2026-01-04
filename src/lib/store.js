@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
 
+export const base = import.meta.env.PROD ? "/playground" : "";
 export const deferredPrompt = writable(null);
 export const isLoggedIn = writable(!!localStorage.getItem("accessCode"));
 export const GAS_URL =

@@ -1,6 +1,6 @@
 <script>
   import { navigate } from 'svelte-routing';
-  import { isLoggedIn, GAS_URL } from '../lib/store.js';
+  import { base, isLoggedIn, GAS_URL } from '../lib/store.js';
 
   let accessCode = '';
   let isLoading = false;
@@ -40,7 +40,7 @@
         localStorage.setItem('role', result.role);
         
         isLoggedIn.set(true); // 스토어 업데이트 (MainLayout의 {#if}가 즉시 바뀜)
-        navigate('/', { replace: true });
+        navigate(base || '/', { replace: true });
       } else {
         errorMessage = result.message;
       }

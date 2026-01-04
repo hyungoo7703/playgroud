@@ -1,8 +1,7 @@
 <script>
   import { Router } from 'svelte-routing';
+  import { base } from './store.js';
   import MainLayout from './lib/MainLayout.svelte';
-
-  const base = import.meta.env.PROD ? '/playground' : '';
 </script>
 
 <Router basepath={base}>

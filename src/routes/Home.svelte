@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { navigate } from 'svelte-routing';
-  import { GAS_URL } from '../lib/store.js';
+  import { base, GAS_URL } from '../lib/store.js';
 
   let monthlyEvents = [];
   let isLoading = true;
@@ -39,7 +39,7 @@
   });
 
   function navigateTo(page) {
-    navigate('/' + page);
+    navigate(`${base}/${page}`);
   }
 
   function getDay(dateString) {
