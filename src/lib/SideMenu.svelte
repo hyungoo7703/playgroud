@@ -20,16 +20,15 @@
 
   // 하위 경로(/playground)를 포함한 실제 URL을 생성하는 헬퍼 함수
   $: getFullPath = (path) => {
-    if (path === '/') return $base || '/';
-    return `${$base}${path}`;
+    if (path === '/') return base || '/';
+    return `${base}${path}`;
   };
 
   // 현재 경로와 메뉴 경로가 일치하는지 확인 (끝의 '/' 제거하여 비교 정확도 향상)
   $: isActive = (path) => {
     const currentPath = $location.pathname.replace(/\/$/, '');
     const targetPath = getFullPath(path).replace(/\/$/, '');
-    // 마지막 base 비교 시에도 $base 사용
-    return currentPath === targetPath || (path === '/' && currentPath === $base);
+    return currentPath === targetPath || (path === '/' && currentPath === base);
   };
 </script>
 

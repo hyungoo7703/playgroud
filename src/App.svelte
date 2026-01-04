@@ -4,6 +4,6 @@
   import MainLayout from './lib/MainLayout.svelte';
 </script>
 
-<Router basepath={$base}>
+<Router basepath={base}>
   <MainLayout />
 </Router>
