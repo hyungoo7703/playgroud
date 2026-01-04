@@ -20,6 +20,7 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ action: 'getEvents' })
       });
       const result = await response.json();
@@ -62,6 +63,7 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify(payload)
       });
       const result = await response.json();

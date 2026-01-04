@@ -2,7 +2,7 @@
   // ... 기존 스크립트 로직 유지 ...
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
-  import { currentPage } from '../lib/store.js';
+  import { navigate } from 'svelte-routing';
 
   let monthlyEvents = [];
   let isLoading = true;
@@ -13,6 +13,7 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ action: 'getEvents' })
       });
       const result = await response.json();
@@ -35,7 +36,7 @@
   });
 
   function navigateTo(page) {
-    currentPage.set(page);
+    navigate('/' + page);
   }
 
   function getDay(dateString) {

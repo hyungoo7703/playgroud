@@ -3,9 +3,6 @@ import { writable } from 'svelte/store';
 // 메뉴 상태 관리
 export const isMenuOpen = writable(false);
 
-// 페이지 라우팅 관리
-export const currentPage = writable('home');
-
 // 다크 모드 관리
 const createDarkModeStore = () => {
   let initialValue = false;

@@ -23,6 +23,7 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ action: 'getManagement', section: 'roulette' })
       });
       const data = await response.json();
@@ -46,6 +47,7 @@
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ 
           action: 'addManagement', 
           section: 'roulette', 

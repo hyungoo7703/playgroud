@@ -1,19 +1,11 @@
 <script>
-  import { onMount } from 'svelte';
-  import { currentPage } from '../lib/store.js';
+  import { navigate } from 'svelte-routing';
 
   let accessCode = '';
   let isLoading = false;
   let errorMessage = '';
 
   const GAS_URL = "https://script.google.com/macros/s/AKfycbyXKahb3Xbi6B1IUXYVKrunW776GaPnS0LxbcQ4BycnzpXXkZiMMNwX4SVNuUA2ExfO/exec";
-
-  onMount(() => {
-    const savedCode = localStorage.getItem('accessCode');
-    if (savedCode) {
-      currentPage.set('home');
-    }
-  });
 
   async function handleLogin() {
     if (!accessCode) {
@@ -36,7 +28,7 @@
         localStorage.setItem('accessCode', accessCode);
         localStorage.setItem('userName', result.userName);
         localStorage.setItem('role', result.role);
-        currentPage.set('home');
+        navigate('/', { replace: true });
       } else {
         errorMessage = result.message;
       }
