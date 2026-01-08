@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { scale, fly, fade } from 'svelte/transition';
   import { quintOut, bounceOut } from 'svelte/easing';
   import { base } from '../lib/store.js';
@@ -9,10 +9,10 @@
   const COLS = 7;
   const FRUITS = ['🍎', '🍊', '🍇', '🥝', '🍋'];
   const BOMB = '💣';
-  
-  // 3초 파일 내 5개 팝 소리의 시작점 (초)
+  const MUSHROOM = '🍄'; // 하드모드 방해 요소
   const POP_START_TIMES = [0, 0.6, 1.2, 1.8, 2.4];
 
+  // --- 2. 상태 관리 ---
   let grid = [];
   let score = 0;
   let bestScore = parseInt(localStorage.getItem('fruitBestScore') || '0');
@@ -22,46 +22,76 @@
   let isShaking = false;
   let particles = [];
 
-  // 오디오 객체 (경로 주의: public/sounds/pop-91931.mp3)
+  // 하드모드 관련 변수
+  let isHardMode = false;
+  let energy = 100;
+  let gameOver = false;
+  let gameInterval;
+
   const popSound = typeof Audio !== 'undefined' ? new Audio(`${base}/sounds/pop.mp3`) : null;
 
-  // --- 2. 사운드 재생 함수 (핵심) ---
+  // --- 3. 핵심 기능 함수 ---
+
   function playPop(type = 'normal') {
     if (!popSound || isMuted) return;
-
-    const sound = popSound.cloneNode(); // 겹침 재생 가능하도록 복제
+    const sound = popSound.cloneNode();
     const randomIndex = Math.floor(Math.random() * POP_START_TIMES.length);
     sound.currentTime = POP_START_TIMES[randomIndex];
-
-    if (type === 'bomb') {
-      sound.playbackRate = 0.6; // 폭탄은 낮고 웅장하게
-    } else if (type === 'refill') {
-      sound.playbackRate = 1.4; // 리필은 경쾌하게
-    } else {
-      sound.playbackRate = 1.0; // 일반 클릭
-    }
-
+    
+    if (type === 'bomb') sound.playbackRate = 0.6;
+    else if (type === 'refill') sound.playbackRate = 1.5;
+    else sound.playbackRate = 1.0;
+    
     sound.play().catch(() => {});
-
-    // 소리가 다음 구간으로 넘어가지 않게 0.5초 후 정지
-    setTimeout(() => {
-      sound.pause();
-      sound.remove();
-    }, 500);
+    setTimeout(() => { sound.pause(); sound.remove(); }, 500);
   }
 
-  // --- 3. 게임 로직 ---
-  function initGame() {
+  function startEnergyDrain() {
+    if (gameInterval) clearInterval(gameInterval);
+    energy = 100;
+    gameOver = false;
+    
+    gameInterval = setInterval(() => {
+      if (!isProcessing && !gameOver && isHardMode) {
+        // 점수가 높을수록 에너지가 더 빨리 소모됨 (다이나믹 난이도)
+        const drainSpeed = 0.8 + (score / 3000); 
+        energy -= drainSpeed;
+        
+        if (energy <= 0) {
+          energy = 0;
+          handleGameOver();
+        }
+      }
+    }, 100);
+  }
+
+  function handleGameOver() {
+    clearInterval(gameInterval);
+    gameOver = true;
+    isShaking = true;
+    playPop('bomb');
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+    setTimeout(() => isShaking = false, 500);
+  }
+
+  function initGame(modeChange = false) {
+    if (modeChange) score = 0;
     grid = Array.from({ length: ROWS }, () => 
       Array.from({ length: COLS }, () => FRUITS[Math.floor(Math.random() * FRUITS.length)])
     );
-    score = 0;
     isNewRecord = false;
     isProcessing = false;
+    gameOver = false;
     particles = [];
+    
+    if (isHardMode) {
+      startEnergyDrain();
+    } else {
+      clearInterval(gameInterval);
+      energy = 100;
+    }
   }
 
-  // 파티클 효과 (터질 때 이모지 파편)
   function createParticles(r, c, emoji) {
     const newItems = Array.from({ length: 6 }, (_, i) => ({
       id: Math.random(),
@@ -73,7 +103,6 @@
     setTimeout(() => { particles = particles.filter(p => p.items !== newItems); }, 600);
   }
 
-  // 연결 블록 찾기
   function getConnectedGroup(r, c, target, visited = new Set()) {
     const key = `${r},${c}`;
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS || visited.has(key) || grid[r][c] !== target) return [];
@@ -85,11 +114,20 @@
     return group;
   }
 
-  // 클릭 이벤트 핸들러
   async function handleCellClick(r, c) {
-    if (isProcessing) return;
+    if (isProcessing || gameOver) return;
     const target = grid[r][c];
     if (!target) return;
+
+    if (target === MUSHROOM) {
+      energy -= 25; // 독버섯 페널티
+      playPop('bomb');
+      if (navigator.vibrate) navigator.vibrate(150);
+      grid[r][c] = null;
+      grid = [...grid];
+      setTimeout(applyGravityOnly, 200);
+      return;
+    }
 
     if (target === BOMB) {
       isProcessing = true;
@@ -100,32 +138,28 @@
     const group = getConnectedGroup(r, c, target);
     if (group.length >= 2) {
       isProcessing = true;
-      playPop('normal'); // 일반 터뜨리기 사운드
+      playPop('normal');
       createParticles(r, c, target);
       if (navigator.vibrate) navigator.vibrate(30);
 
       score += group.length * 10;
+      if (isHardMode) energy = Math.min(100, energy + group.length * 1.5); // 에너지 회복
+      
       const shouldCreateBomb = group.length >= 5;
 
-      // [1단계] 터뜨리기 (비우기)
       group.forEach(({ r: row, c: col }, index) => {
         grid[row][col] = (shouldCreateBomb && index === 0) ? BOMB : null;
       });
       grid = [...grid];
-
-      // [2단계] 중력 이동
       setTimeout(applyGravityOnly, 350);
     }
   }
 
-  // 폭탄 로직
   async function triggerBomb(r, c) {
-    playPop('normal'); // 전조 사운드
-    if (navigator.vibrate) navigator.vibrate(50);
-    
+    playPop('normal');
     setTimeout(() => {
       isShaking = true;
-      playPop('bomb'); // 폭탄 사운드 (저음)
+      playPop('bomb');
       createParticles(r, c, '🔥');
       if (navigator.vibrate) navigator.vibrate([100, 50, 150]);
 
@@ -143,7 +177,6 @@
     }, 150);
   }
 
-  // 중력: 기존 과일 아래로 밀기
   function applyGravityOnly() {
     for (let c = 0; c < COLS; c++) {
       let emptyRow = ROWS - 1;
@@ -157,25 +190,24 @@
       }
     }
     grid = [...grid];
-    
-    // [3단계] 위에서 채우기
     setTimeout(refillGrid, 450);
   }
 
-  // 리필: 비어있는 공간 채우기
   function refillGrid() {
     let hasRefilled = false;
     for (let c = 0; c < COLS; c++) {
       for (let r = 0; r < ROWS; r++) {
         if (grid[r][c] === null) {
-          grid[r][c] = FRUITS[Math.floor(Math.random() * FRUITS.length)];
+          const rand = Math.random();
+          if (isHardMode && rand < 0.07) grid[r][c] = MUSHROOM; // 하드모드 독버섯 생성
+          else grid[r][c] = FRUITS[Math.floor(Math.random() * FRUITS.length)];
           hasRefilled = true;
         }
       }
     }
     
     if (hasRefilled) {
-      playPop('refill'); // 리필 사운드 (고음)
+      playPop('refill');
       grid = [...grid];
     }
 
@@ -184,22 +216,21 @@
       isNewRecord = true;
       localStorage.setItem('fruitBestScore', bestScore.toString());
     }
-
-    // 모든 처리가 끝나면 클릭 잠금 해제
     setTimeout(() => { isProcessing = false; }, 600);
   }
 
-  onMount(initGame);
+  onMount(() => initGame());
+  onDestroy(() => clearInterval(gameInterval));
 </script>
 
 <div class="flex flex-col items-center justify-center min-h-screen bg-indigo-50 dark:bg-gray-900 p-4 select-none overflow-hidden">
   
-  <div class="w-full max-w-xs flex justify-between items-center mb-6 bg-white dark:bg-gray-800 p-5 rounded-[2.5rem] shadow-lg border border-white dark:border-gray-700">
+  <div class="w-full max-w-xs flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-lg border border-white dark:border-gray-700">
     <div class="text-left">
       <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Score</p>
       <p class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{score}</p>
     </div>
-    <button on:click={() => isMuted = !isMuted} class="text-xl p-2 bg-indigo-50 dark:bg-gray-700 rounded-full active:scale-90 transition-all">
+    <button on:click={() => isMuted = !isMuted} class="text-xl p-2 bg-indigo-50 dark:bg-gray-700 rounded-full">
       {isMuted ? '🔇' : '🔊'}
     </button>
     <div class="text-right">
@@ -207,6 +238,15 @@
       <p class="text-2xl font-black {isNewRecord ? 'text-orange-500 animate-bounce' : 'text-purple-600'}">{bestScore}</p>
     </div>
   </div>
+
+  {#if isHardMode}
+    <div class="w-full max-w-xs h-3 bg-gray-200 dark:bg-gray-700 rounded-full mb-6 overflow-hidden border-2 border-white dark:border-gray-800 shadow-inner">
+      <div 
+        class="h-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-150"
+        style="width: {energy}%"
+      ></div>
+    </div>
+  {/if}
 
   <div class="relative {isShaking ? 'shake-animation' : ''}">
     <div class="bg-indigo-100 dark:bg-gray-700 p-3 rounded-[2.5rem] shadow-inner border-4 border-white dark:border-gray-800">
@@ -220,7 +260,7 @@
                   on:click={() => handleCellClick(r, c)}
                   in:fly={{ y: -200, duration: 600, easing: bounceOut, delay: r * 40 }}
                 >
-                  <span class={cell === BOMB ? 'animate-pulse scale-110' : ''}>{cell}</span>
+                  <span class={cell === BOMB || cell === MUSHROOM ? 'animate-pulse scale-110' : ''}>{cell}</span>
                 </button>
               {/if}
             </div>
@@ -228,6 +268,17 @@
         {/each}
       </div>
     </div>
+
+    {#if gameOver}
+      <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/75 rounded-[2.5rem] backdrop-blur-sm" in:fade>
+        <p class="text-6xl mb-4">😵</p>
+        <h2 class="text-3xl font-black text-white mb-2 tracking-tighter">GAME OVER</h2>
+        <p class="text-white/70 mb-8 font-bold text-lg">최종 점수: {score}점</p>
+        <button on:click={() => initGame()} class="bg-white text-black px-10 py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">
+          다시 도전!
+        </button>
+      </div>
+    {/if}
 
     <div class="absolute inset-0 pointer-events-none">
       {#each particles as group}
@@ -245,11 +296,21 @@
     </div>
   </div>
 
-  <div class="mt-10 w-full max-w-xs space-y-4">
-    <div class="py-2 bg-white/60 dark:bg-gray-800/60 rounded-full text-center shadow-sm">
-       <p class="text-[11px] text-gray-400 font-bold">💡 5개 이상 터뜨리면 <span class="text-lg">💣</span> 보너스!</p>
+  <div class="mt-8 w-full max-w-xs space-y-3">
+    <div class="flex gap-2 p-1 bg-white/50 dark:bg-gray-800/50 rounded-2xl backdrop-blur-sm">
+      <button 
+        on:click={() => { isHardMode = false; initGame(true); }}
+        class="flex-1 py-3 rounded-xl font-black text-xs transition-all { !isHardMode ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400' }">
+        일반 모드
+      </button>
+      <button 
+        on:click={() => { isHardMode = true; initGame(true); }}
+        class="flex-1 py-3 rounded-xl font-black text-xs transition-all { isHardMode ? 'bg-red-600 text-white shadow-md' : 'text-gray-400' }">
+        하드 모드 🔥
+      </button>
     </div>
-    <button on:click={initGame} class="w-full bg-gray-900 dark:bg-indigo-600 text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">
+    
+    <button on:click={() => initGame()} class="w-full bg-gray-900 dark:bg-gray-100 dark:text-black text-white py-4 rounded-2xl font-black shadow-xl active:scale-95 transition-all">
       새 게임 시작
     </button>
   </div>
@@ -257,7 +318,7 @@
 
 <style>
   .shake-animation {
-    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
   }
   @keyframes shake {
     10%, 90% { transform: translate3d(-1px, 0, 0); }
