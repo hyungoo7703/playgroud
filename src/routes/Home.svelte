@@ -1,5 +1,4 @@
 <script>
-  // ... 기존 스크립트 로직 유지 ...
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { navigate } from 'svelte-routing';
@@ -59,18 +58,22 @@
     <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl"></div>
   </header>
 
-  <section class="grid grid-cols-3 gap-3">
-    <button on:click={() => navigateTo('events')} class="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
-      <div class="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-xl mb-2">📅</div>
-      <span class="text-[11px] font-bold text-gray-700 dark:text-gray-300">가족 일정</span>
+  <section class="grid grid-cols-4 gap-2">
+    <button on:click={() => navigateTo('events')} class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
+      <div class="w-9 h-9 bg-blue-50 rounded-2xl flex items-center justify-center text-lg mb-2">📅</div>
+      <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">일정</span>
     </button>
-    <button on:click={() => navigateTo('bulletin-board')} class="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
-      <div class="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center text-xl mb-2">💬</div>
-      <span class="text-[11px] font-bold text-gray-700 dark:text-gray-300">가족 게시판</span>
+    <button on:click={() => navigateTo('bulletin-board')} class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
+      <div class="w-9 h-9 bg-green-50 rounded-2xl flex items-center justify-center text-lg mb-2">💬</div>
+      <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">게시판</span>
     </button>
-    <button on:click={() => navigateTo('ledger')} class="flex flex-col items-center p-4 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
-      <div class="w-10 h-10 bg-yellow-50 rounded-2xl flex items-center justify-center text-xl mb-2">💰</div>
-      <span class="text-[11px] font-bold text-gray-700 dark:text-gray-300">장부</span>
+    <button on:click={() => navigateTo('ledger')} class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
+      <div class="w-9 h-9 bg-yellow-50 rounded-2xl flex items-center justify-center text-lg mb-2">💰</div>
+      <span class="text-[10px] font-bold text-gray-700 dark:text-gray-300">장부</span>
+    </button>
+    <button on:click={() => navigateTo('game')} class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-indigo-100 dark:border-indigo-900 active:scale-95 transition-all">
+      <div class="w-9 h-9 bg-indigo-50 rounded-2xl flex items-center justify-center text-lg mb-2">🎮</div>
+      <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">게임</span>
     </button>
   </section>
 
@@ -113,7 +116,7 @@
             </div>
             <div class="flex-1 overflow-hidden">
               <p class="text-[10px] font-bold text-indigo-400 truncate uppercase">{event.category}</p>
-              <p class="font-bold text-gray-800 dark:text-gray-200 truncate">{event.title}</p>
+              <p class="font-bold text-gray-800 dark:text-gray-200 truncate text-left">{event.title}</p>
             </div>
           </li>
         {/each}

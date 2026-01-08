@@ -14,6 +14,7 @@
   import Login from '../routes/Login.svelte';
   import BulletinBoard from '../routes/BulletinBoard.svelte';
   import Ledger from '../routes/Ledger.svelte';
+  import Game from '../routes/Game.svelte';
 
   const location = useLocation();
 
@@ -67,6 +68,7 @@
       <Route path="settings" component={Settings} /> 
       <Route path="bulletin-board" component={BulletinBoard} /> 
       <Route path="ledger" component={Ledger} />
+      <Route path="game" component={Game} />
     {/if}
   </main>
 </div>
