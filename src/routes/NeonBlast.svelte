@@ -16,6 +16,7 @@
     audio.volume = 0.4; audio.play().catch(() => {});
   };
 
+  // 스테이지 이동 시 사운드 중첩 방지
   function stopPersistentSounds() {
     if (zapAudio) { zapAudio.pause(); zapAudio.currentTime = 0; }
     gameStore.update(s => ({ ...s, wasZoneActive: false }));
@@ -94,7 +95,7 @@
   
   {#if !isStarted}
     <div class="flex flex-col items-center justify-center min-h-[100dvh] w-full px-6 py-20 z-10">
-      <h1 class="text-6xl font-black text-cyan-400 drop-shadow-[0_0_20px_#22d3ee] mb-16 italic text-center">NEON BLAST</h1>
+      <h1 class="text-6xl md:text-7xl font-black text-cyan-400 drop-shadow-[0_0_20px_#22d3ee] mb-16 italic text-center leading-tight">NEON BLAST</h1>
       <div class="flex flex-col gap-6 w-full max-w-sm">
         <button on:click={() => start(true)} class="w-full py-6 bg-cyan-500 rounded-full font-black text-2xl shadow-xl active:scale-95 transition-all">새 게임</button>
         {#if $gameStore.currentLevel > 1}
@@ -103,40 +104,43 @@
       </div>
     </div>
   {:else}
-    <header class="w-full max-w-[480px] px-5 py-2 flex justify-between items-center bg-gray-900/60 backdrop-blur-md border-b border-white/10 shrink-0 z-20">
+    <header class="w-full max-w-[500px] px-5 py-1 md:py-2 flex justify-between items-center bg-gray-900/60 backdrop-blur-md border-b border-white/10 shrink-0 z-20">
       <div class="flex flex-col">
         <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest">Stage {$gameStore.currentLevel}</span>
-        <p class="text-2xl font-black italic">{$gameStore.ballsLeft}</p>
+        <p class="text-2xl font-black italic text-white leading-none">{$gameStore.ballsLeft}</p>
       </div>
-      <button on:click={() => { isMuted = !isMuted; if(isMuted) { bgmAudio.pause(); zapAudio.pause(); } else { bgmAudio.play(); } }} class="p-2 bg-gray-800 rounded-xl border border-gray-700">
+      <button on:click={() => { isMuted = !isMuted; if(isMuted) { bgmAudio.pause(); zapAudio.pause(); } else { bgmAudio.play(); } }} class="p-2 bg-gray-800 rounded-xl border border-gray-700 active:scale-90 transition-transform">
         {isMuted ? '🔇' : '🔊'}
       </button>
       <div class="text-right flex flex-col">
         <span class="text-[10px] text-magenta-500 font-bold uppercase tracking-widest">Score</span>
-        <p class="text-2xl font-black italic">{$gameStore.score}</p>
+        <p class="text-2xl font-black italic text-white leading-none">{$gameStore.score}</p>
       </div>
     </header>
 
-    <main class="flex-1 w-full max-w-[480px] flex flex-col items-center justify-center p-2 min-h-0 relative">
-      <div class="mt-1 mb-2 text-center shrink-0 z-10">
-        <p class="text-yellow-400 font-black text-base animate-pulse">✨ 모든 황금 핀을 제거하면 클리어! ✨</p>
+    <main class="flex-1 w-full max-w-[500px] flex flex-col items-center justify-center p-1 min-h-0 relative gap-1">
+      <div class="text-center shrink-0 z-10">
+        <p class="text-yellow-400 font-black text-sm md:text-base animate-pulse">✨ 모든 황금 핀 제거 시 클리어! ✨</p>
       </div>
       
-      <div class="relative w-full h-full max-h-[52dvh] md:max-h-none aspect-[2/3] touch-none">
+      <div class="relative w-full h-full max-h-[58dvh] md:max-h-none aspect-[2/3] touch-none">
         <canvas bind:this={canvas} width="400" height="600" 
           on:click={handleShoot} 
           on:mousemove={(e) => { const rect = canvas.getBoundingClientRect(); mouseX = (e.clientX - rect.left) * (canvas.width / rect.width); }}
-          class="w-full h-full rounded-[2.8rem] border-4 border-[#00f3ff] shadow-[0_0_50px_rgba(0,243,255,0.25)]"
+          class="w-full h-full rounded-[2.8rem] border-4 border-[#00f3ff] shadow-[0_0_40px_rgba(0,243,255,0.25)]"
           style="background: url('{base}/images/neon/background.png') center/cover;"></canvas>
 
         {#if $gameStore.isWin || $gameStore.isGameOver}
           <div class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center rounded-[2.8rem] z-50 p-6 backdrop-blur-sm animate-fade-in">
             <h2 class="text-5xl font-black mb-10 text-center {$gameStore.isWin ? 'text-yellow-400' : 'text-red-600'}">
-              {$gameStore.isWin ? 'STAY GOLD!' : 'FAILED'}
+              {$gameStore.isWin ? 'GOLDEN CLEAR!' : 'FAILED'}
             </h2>
             <div class="flex flex-col gap-4 w-full max-w-[260px]">
-              {#if $gameStore.isWin} <button on:click={handleNextStage} class="w-full py-5 bg-cyan-500 rounded-full font-black text-2xl shadow-lg active:scale-95 transition-all">다음 단계로</button>
-              {:else} <button on:click={handleRetry} class="w-full py-5 bg-magenta-500 rounded-full font-black text-2xl shadow-lg active:scale-95 transition-all">다시 도전</button> {/if}
+              {#if $gameStore.isWin} 
+                <button on:click={handleNextStage} class="w-full py-5 bg-cyan-500 rounded-full font-black text-2xl shadow-lg active:scale-95 transition-all">다음 레벨</button>
+              {:else} 
+                <button on:click={handleRetry} class="w-full py-5 bg-magenta-500 rounded-full font-black text-2xl shadow-lg active:scale-95 transition-all">다시 도전</button> 
+              {/if}
               <button on:click={() => location.reload()} class="w-full py-4 bg-gray-800 rounded-full font-black text-xl border border-gray-600 active:scale-95">메인 메뉴</button>
             </div>
           </div>
@@ -144,14 +148,14 @@
       </div>
     </main>
 
-    <footer class="w-full py-3 px-8 flex justify-center items-center shrink-0 z-20">
-      <button on:click={() => useSpecialAbility(mouseX)} class="flex items-center gap-5 px-10 py-4 bg-gradient-to-br from-magenta-500 to-purple-800 rounded-full border-2 border-white/30 shadow-[0_0_25px_rgba(217,70,239,0.5)] active:scale-90 transition-all group overflow-hidden">
+    <footer class="w-full max-w-[500px] pt-0 pb-2 px-8 flex justify-center items-center shrink-0 z-20">
+      <button on:click={() => useSpecialAbility(mouseX)} class="flex items-center gap-5 px-10 py-3 bg-gradient-to-br from-magenta-500 to-purple-800 rounded-full border-2 border-white/30 shadow-[0_0_25px_rgba(217,70,239,0.5)] active:scale-90 transition-all group overflow-hidden">
         <div class="relative">
           <div class="absolute inset-0 bg-white blur-md opacity-25"></div>
           <img src="{base}/images/neon/special-ability-icon.png" alt="Skill" class="w-9 h-9 object-contain relative z-10" />
         </div>
         <div class="flex flex-col items-start leading-none">
-          <span class="text-white font-black text-2xl italic leading-none">필살기 사용</span>
+          <span class="text-white font-black text-2xl italic leading-none tracking-tight">필살기 사용</span>
           <span class="text-magenta-200 text-[10px] font-bold uppercase mt-1 opacity-80">Overload [3 Balls]</span>
         </div>
       </button>
