@@ -16,6 +16,11 @@
     audio.volume = 0.4; audio.play().catch(() => {});
   };
 
+  function stopPersistentSounds() {
+    if (zapAudio) { zapAudio.pause(); zapAudio.currentTime = 0; }
+    gameStore.update(s => ({ ...s, wasZoneActive: false }));
+  }
+
   async function start(isNew = true) {
     if (isNew) {
       localStorage.setItem('neon_blast_save', JSON.stringify({ level: 1, highScore: $gameStore.highScore }));
@@ -24,49 +29,41 @@
     isStarted = true;
     await tick();
     ctx = canvas.getContext('2d');
-    
     zapAudio = new Audio(`${base}/sounds/neon/zap-synth.mp3`); zapAudio.loop = true; zapAudio.volume = 0.3;
     bgmAudio = new Audio(`${base}/sounds/neon/bgm.mp3`); bgmAudio.loop = true; bgmAudio.volume = 0.4;
-    
     if (!isMuted) bgmAudio.play().catch(() => {});
     currentStageData = generateStage($gameStore.currentLevel);
     initPhysics(currentStageData);
     loop();
   }
 
-  function handleRetry() { initPhysics(currentStageData); }
+  function handleRetry() { stopPersistentSounds(); initPhysics(currentStageData); }
   function handleNextStage() {
+    stopPersistentSounds();
     const nextLvl = $gameStore.currentLevel + 1;
     gameStore.update(s => ({ ...s, currentLevel: nextLvl }));
     currentStageData = generateStage(nextLvl);
     initPhysics(currentStageData);
   }
 
-  function loop() {
-    updatePhysics(canvas.width, canvas.height);
-    render();
-    frame = requestAnimationFrame(loop);
-  }
+  function loop() { updatePhysics(canvas.width, canvas.height); render(); frame = requestAnimationFrame(loop); }
 
   function render() {
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
     $gameStore.zones.forEach(z => {
-      ctx.fillStyle = 'rgba(217, 70, 239, 0.1)'; ctx.fillRect(z.x, z.y, z.w, z.h);
-      ctx.strokeStyle = '#d946ef'; ctx.strokeRect(z.x, z.y, z.w, z.h);
+      ctx.fillStyle = 'rgba(217, 70, 239, 0.15)'; ctx.fillRect(z.x, z.y, z.w, z.h);
+      ctx.strokeStyle = '#d946ef'; ctx.lineWidth = 2; ctx.strokeRect(z.x, z.y, z.w, z.h);
     });
-
     $gameStore.blackHoles.forEach(bh => {
       const grad = ctx.createRadialGradient(bh.x, bh.y, 5, bh.x, bh.y, bh.radius);
       grad.addColorStop(0, '#000'); grad.addColorStop(1, 'rgba(168, 85, 247, 0.4)');
       ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(bh.x, bh.y, bh.radius, 0, Math.PI*2); ctx.fill();
     });
-
     $gameStore.movingWalls.forEach(w => {
-      ctx.fillStyle = '#fff'; ctx.fillRect(w.x - w.w/2, w.y - w.h/2, w.w, w.h);
+      ctx.fillStyle = '#fff'; ctx.shadowBlur = 10; ctx.shadowColor = '#fff';
+      ctx.fillRect(w.x - w.w/2, w.y - w.h/2, w.w, w.h);
     });
-
     $gameStore.pegs.forEach(p => {
       if (!p.active) return;
       const isGold = p.type === 'gold';
@@ -75,7 +72,6 @@
       ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2); ctx.fill();
       if (isGold) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke(); }
     });
-
     $gameStore.balls.forEach(b => {
       ctx.shadowBlur = 10; ctx.shadowColor = '#ff00ff';
       ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI*2); ctx.fill();
@@ -84,87 +80,81 @@
 
   onMount(() => {
     window.addEventListener('pegHit', () => playSfx('glass-clink'));
-    window.addEventListener('portalWarp', () => playSfx('warp'));
     window.addEventListener('powerUp', () => playSfx('power-up'));
     window.addEventListener('zoneStart', () => { if (!isMuted && zapAudio) zapAudio.play(); });
-    window.addEventListener('zoneStop', () => { if (zapAudio) zapAudio.pause(); });
+    window.addEventListener('zoneStop', () => { if (zapAudio) { zapAudio.pause(); zapAudio.currentTime = 0; } });
   });
 
-  onDestroy(() => {
-    cancelAnimationFrame(frame);
-    if (bgmAudio) bgmAudio.pause();
-    if (zapAudio) zapAudio.pause();
-  });
+  onDestroy(() => { cancelAnimationFrame(frame); if (bgmAudio) bgmAudio.pause(); if (zapAudio) zapAudio.pause(); });
 </script>
 
-<div class="flex flex-col items-center justify-center min-h-screen bg-[#050505] text-white p-4 select-none font-sans">
+<div class="flex flex-col items-center w-full min-h-screen h-[100dvh] bg-[#050505] text-white overflow-y-auto md:overflow-hidden select-none font-sans relative">
+  
   {#if !isStarted}
-    <div class="text-center animate-fade-in">
-      <h1 class="text-7xl font-black text-cyan-400 drop-shadow-[0_0_20px_#22d3ee] mb-12 italic">NEON BLAST</h1>
-      <div class="flex flex-col gap-4">
-        <button on:click={() => start(true)} class="px-16 py-6 bg-cyan-500 rounded-full font-black text-2xl shadow-lg hover:scale-105 transition-all">새 게임</button>
+    <div class="flex flex-col items-center justify-center flex-1 w-full px-6 py-20">
+      <h1 class="text-6xl font-black text-cyan-400 drop-shadow-[0_0_20px_#22d3ee] mb-16 italic text-center">NEON BLAST</h1>
+      <div class="flex flex-col gap-5 w-full max-w-sm">
+        <button on:click={() => start(true)} class="w-full py-6 bg-cyan-500 rounded-full font-black text-2xl shadow-xl active:scale-95 transition-all">새 게임</button>
         {#if $gameStore.currentLevel > 1}
-          <button on:click={() => start(false)} class="px-16 py-6 bg-gray-800 rounded-full font-black text-2xl border border-gray-600">이어하기 (LV.{$gameStore.currentLevel})</button>
+          <button on:click={() => start(false)} class="w-full py-6 bg-gray-800 rounded-full font-black text-2xl border border-gray-600 active:scale-95">이어하기 (LV.{$gameStore.currentLevel})</button>
         {/if}
       </div>
     </div>
   {:else}
-    <div class="flex flex-col md:flex-row items-start gap-8">
-      
-      <div class="flex flex-col items-center">
-        <div class="w-full max-w-[400px] flex justify-between p-5 bg-gray-900/80 rounded-3xl mb-4 border border-white/10 backdrop-blur-md">
-          <div><span class="text-[10px] text-cyan-400 font-bold uppercase">LV.{$gameStore.currentLevel}</span><p class="text-3xl font-black italic">{$gameStore.ballsLeft}</p></div>
-          <button on:click={() => { isMuted = !isMuted; if(isMuted) { bgmAudio.pause(); zapAudio.pause(); } else { bgmAudio.play(); } }} class="p-3 bg-gray-800 rounded-2xl">
-            {isMuted ? '🔇' : '🔊'}
-          </button>
-          <div class="text-right flex flex-col"><span class="text-[10px] text-magenta-500 font-bold uppercase tracking-widest">Score</span><span class="text-3xl font-black italic">{$gameStore.score}</span></div>
-        </div>
+    <header class="w-full max-w-[500px] px-5 py-4 flex justify-between items-center bg-gray-900/50 backdrop-blur-md border-b border-white/10 shrink-0">
+      <div class="flex flex-col">
+        <span class="text-[10px] text-cyan-400 font-bold uppercase tracking-widest leading-none">Stage {$gameStore.currentLevel}</span>
+        <p class="text-2xl font-black italic text-white mt-1">{$gameStore.ballsLeft}</p>
+      </div>
+      <button on:click={() => { isMuted = !isMuted; if(isMuted) { bgmAudio.pause(); zapAudio.pause(); } else { bgmAudio.play(); } }} class="p-2 bg-gray-800 rounded-xl border border-gray-700">
+        {isMuted ? '🔇' : '🔊'}
+      </button>
+      <div class="text-right flex flex-col">
+        <span class="text-[10px] text-magenta-500 font-bold uppercase tracking-widest leading-none">Score</span>
+        <p class="text-2xl font-black italic text-white mt-1">{$gameStore.score}</p>
+      </div>
+    </header>
 
-        <div class="relative w-[400px] aspect-[2/3]">
-          <canvas bind:this={canvas} width="400" height="600" on:click={(e) => shootBall(e.offsetX)} on:mousemove={(e) => mouseX = e.offsetX}
-            class="w-full h-full rounded-[3.5rem] border-4 border-[#00f3ff] shadow-[0_0_50px_rgba(0,243,255,0.2)]"
-            style="background: url('{base}/images/neon/background.png') center/cover;"></canvas>
+    <main class="flex-1 w-full max-w-[500px] flex flex-col items-center justify-center p-2 min-h-0 relative">
+      <p class="mb-3 text-yellow-400 font-black text-base animate-pulse text-center">✨ 모든 황금 핀을 제거하면 클리어! ✨</p>
+      <div class="relative w-full h-full max-h-[65dvh] aspect-[2/3] group">
+        <canvas bind:this={canvas} width="400" height="600" on:click={(e) => shootBall(e.offsetX)} on:mousemove={(e) => mouseX = e.offsetX}
+          class="w-full h-full rounded-[2.5rem] border-4 border-[#00f3ff] shadow-[0_0_40px_rgba(0,243,255,0.2)]"
+          style="background: url('{base}/images/neon/background.png') center/cover;"></canvas>
 
-          {#if $gameStore.isWin || $gameStore.isGameOver}
-            <div class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center rounded-[3.5rem] z-50">
-              <h2 class="text-5xl font-black mb-10 {$gameStore.isWin ? 'text-yellow-400' : 'text-red-600'}">
-                {$gameStore.isWin ? 'GOLDEN CLEAR!' : 'GAME OVER'}
-              </h2>
-              <div class="flex flex-col gap-4 w-64">
-                {#if $gameStore.isWin} <button on:click={handleNextStage} class="py-5 bg-cyan-500 rounded-full font-black text-2xl">다음 레벨</button>
-                {:else} <button on:click={handleRetry} class="py-5 bg-magenta-500 rounded-full font-black text-2xl">다시 도전하기</button> {/if}
-                <button on:click={() => location.reload()} class="py-4 bg-gray-800 rounded-full font-black text-xl border border-gray-600">메인 메뉴로</button>
-              </div>
+        {#if $gameStore.isWin || $gameStore.isGameOver}
+          <div class="absolute inset-0 bg-black/95 flex flex-col items-center justify-center rounded-[2.5rem] z-50 p-6 backdrop-blur-sm">
+            <h2 class="text-5xl font-black mb-10 text-center {$gameStore.isWin ? 'text-yellow-400' : 'text-red-600'}">
+              {$gameStore.isWin ? 'GOLDEN CLEAR!' : 'GAME OVER'}
+            </h2>
+            <div class="flex flex-col gap-4 w-full max-w-[260px]">
+              {#if $gameStore.isWin} <button on:click={handleNextStage} class="w-full py-5 bg-cyan-500 rounded-full font-black text-2xl shadow-lg active:scale-95">다음 레벨</button>
+              {:else} <button on:click={handleRetry} class="w-full py-5 bg-magenta-500 rounded-full font-black text-2xl shadow-lg active:scale-95">다시 도전하기</button> {/if}
+              <button on:click={() => location.reload()} class="w-full py-4 bg-gray-800 rounded-full font-black text-xl border border-gray-600">메인 메뉴로</button>
             </div>
-          {/if}
-        </div>
-        <p class="mt-6 text-yellow-400 font-black text-lg animate-pulse">✨ 모든 황금 핀을 제거하면 클리어! ✨</p>
-      </div>
-
-      <div class="hidden md:flex flex-col items-center p-6 bg-gray-900/60 rounded-[3rem] border border-cyan-500/20 backdrop-blur-xl">
-        <p class="text-magenta-400 font-black text-sm tracking-[0.3em] mb-4 animate-pulse">필살기</p>
-        <button on:click={() => useSpecialAbility(mouseX)} class="relative group active:scale-95 transition-all">
-          <div class="absolute inset-0 bg-magenta-500 blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-          <div class="relative p-8 bg-gradient-to-br from-magenta-500 to-purple-800 rounded-full border-2 border-white/30 shadow-[0_0_30px_rgba(217,70,239,0.5)]">
-            <img src="{base}/images/neon/special-ability-icon.png" alt="Skill" class="w-16 h-16 object-contain" />
           </div>
-        </button>
-        <p class="mt-4 text-[10px] text-gray-400 font-bold uppercase">Overload [3 Balls]</p>
+        {/if}
       </div>
+    </main>
 
-      <div class="md:hidden mt-4">
-          <button on:click={() => useSpecialAbility(mouseX)} class="flex items-center gap-3 px-6 py-3 bg-magenta-600 rounded-full font-black italic shadow-lg">
-            <img src="{base}/images/neon/special-ability-icon.png" alt="Skill" class="w-6 h-6" />
-            필살기 사용
-          </button>
-      </div>
-
-    </div>
+    <footer class="absolute bottom-6 right-6 z-40 md:relative md:bottom-auto md:right-auto md:w-full md:max-w-[450px] md:py-6 md:flex md:justify-center shrink-0">
+      <button on:click={() => useSpecialAbility(mouseX)} class="flex items-center gap-4 px-8 py-4 bg-gradient-to-br from-magenta-500 to-purple-800 rounded-3xl border-2 border-white/30 shadow-[0_0_25px_rgba(217,70,239,0.5)] active:scale-90 transition-all group">
+        <div class="relative">
+          <div class="absolute inset-0 bg-white blur-md opacity-20"></div>
+          <img src="{base}/images/neon/special-ability-icon.png" alt="Skill" class="w-7 h-7 object-contain relative z-10" />
+        </div>
+        <div class="flex flex-col items-start leading-none">
+          <span class="text-white font-black text-xl italic leading-none">필살기 사용</span>
+          <span class="text-magenta-200 text-[9px] font-bold uppercase tracking-tighter mt-1">Overload [3 Balls]</span>
+        </div>
+      </button>
+    </footer>
   {/if}
 </div>
 
 <style>
   canvas { touch-action: none; cursor: crosshair; }
-  .animate-fade-in { animation: fadeIn 0.8s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  :global(body) { background-color: #050505; margin: 0; padding: 0; }
 </style>
