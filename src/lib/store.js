@@ -9,6 +9,30 @@ export const GAS_URL =
 // 메뉴 상태 관리
 export const isMenuOpen = writable(false);
 
+const getSaveData = () => {
+  const save = localStorage.getItem("neon_blast_save");
+  return save ? JSON.parse(save) : { level: 1, highScore: 0 };
+};
+
+const initialSave = getSaveData();
+
+export const gameStore = writable({
+  balls: [],
+  pegs: [],
+  particles: [],
+  zones: [],
+  portals: [],
+  movingWalls: [],
+  blackHoles: [], // 스테이지 50+ 전용 기믹
+  score: 0,
+  ballsLeft: 10,
+  isWin: false,
+  isGameOver: false,
+  currentLevel: initialSave.level,
+  highScore: initialSave.highScore,
+  wasZoneActive: false,
+});
+
 // 다크 모드 관리
 const createDarkModeStore = () => {
   let initialValue = false;

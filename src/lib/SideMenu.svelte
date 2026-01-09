@@ -40,9 +40,17 @@
       icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.344l-.707-.707M8 12a4 4 0 118 0 4 4 0 01-8 0z" />' 
     },
     { 
-      path: '/game', 
+      path: '/fruit-pang', 
       title: '과일 팡팡', 
       icon: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />' 
+    },
+    {
+      path: '/neon-blast',
+      title: '네온 블래스트',
+      icon: `
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+          d="M12 2L4 7v10l8 5 8-5V7l-8-5zM13 7l-5 7h4l-1 5 5-7h-4l1-5z" />
+      `
     },
     { 
       path: '/settings', 

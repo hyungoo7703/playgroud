@@ -15,6 +15,8 @@
   import BulletinBoard from '../routes/BulletinBoard.svelte';
   import Ledger from '../routes/Ledger.svelte';
   import Game from '../routes/Game.svelte';
+  import FruitPang from '../routes/FruitPang.svelte';
+  import NeonBlast from '../routes/NeonBlast.svelte';
 
   const location = useLocation();
 
@@ -69,6 +71,8 @@
       <Route path="bulletin-board" component={BulletinBoard} /> 
       <Route path="ledger" component={Ledger} />
       <Route path="game" component={Game} />
+      <Route path="fruit-pang" component={FruitPang} />
+      <Route path="neon-blast" component={NeonBlast} />
     {/if}
   </main>
 </div>
