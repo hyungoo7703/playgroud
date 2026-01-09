@@ -10,6 +10,7 @@ export const GAS_URL =
 export const isMenuOpen = writable(false);
 
 const getSaveData = () => {
+  if (typeof localStorage === "undefined") return { level: 1, highScore: 0 };
   const save = localStorage.getItem("neon_blast_save");
   return save ? JSON.parse(save) : { level: 1, highScore: 0 };
 };
@@ -23,7 +24,7 @@ export const gameStore = writable({
   zones: [],
   portals: [],
   movingWalls: [],
-  blackHoles: [], // 스테이지 50+ 전용 기믹
+  blackHoles: [],
   score: 0,
   ballsLeft: 10,
   isWin: false,
