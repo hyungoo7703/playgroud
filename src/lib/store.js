@@ -10,7 +10,9 @@ export const GAS_URL =
 export const isMenuOpen = writable(false);
 
 const getSaveData = () => {
-  if (typeof localStorage === "undefined") return { level: 1, highScore: 0 };
+  // 브라우저 환경인지 확인
+  if (typeof window === "undefined" || !window.localStorage)
+    return { level: 1, highScore: 0 };
   const save = localStorage.getItem("neon_blast_save");
   return save ? JSON.parse(save) : { level: 1, highScore: 0 };
 };
@@ -24,14 +26,15 @@ export const gameStore = writable({
   zones: [],
   portals: [],
   movingWalls: [],
-  blackHoles: [],
+  rotatingBars: [],
   score: 0,
   ballsLeft: 10,
   isWin: false,
   isGameOver: false,
-  currentLevel: initialSave.level,
-  highScore: initialSave.highScore,
+  currentLevel: initialSave.level || 1,
+  highScore: initialSave.highScore || 0,
   wasZoneActive: false,
+  suctionTarget: null,
 });
 
 // 다크 모드 관리

@@ -5,20 +5,23 @@ const BOUNCE = 0.75;
 const SUB_STEPS = 4;
 
 export function initPhysics(stage) {
+  const resetPegs = stage.pegs.map((p) => ({ ...p, active: true }));
+  const resetWalls = stage.movingWalls.map((w) => ({ ...w }));
+  const resetBars = stage.rotatingBars.map((b) => ({ ...b }));
+
   gameStore.update((state) => ({
     ...state,
-    pegs: stage.pegs,
+    pegs: resetPegs,
     zones: stage.gravityZones,
     portals: stage.portals,
-    movingWalls: stage.movingWalls,
-    blackHoles: stage.blackHoles || [],
+    movingWalls: resetWalls,
+    rotatingBars: resetBars,
     ballsLeft: stage.ballCount,
     balls: [],
-    particles: [],
     score: 0,
     isWin: false,
     isGameOver: false,
-    wasZoneActive: false,
+    suctionTarget: null,
   }));
 }
 
@@ -31,22 +34,29 @@ export function updatePhysics(width, height) {
       if (Math.abs(w.x - 200) > w.range) w.dir *= -1;
     });
 
-    let anyBallInZone = false;
+    state.rotatingBars.forEach((b) => {
+      b.angle += b.speed;
+    });
 
     for (let s = 0; s < SUB_STEPS; s++) {
       state.balls.forEach((ball) => {
-        let gravity = GRAVITY / SUB_STEPS;
-
-        state.blackHoles.forEach((bh) => {
-          const dx = bh.x - ball.x;
-          const dy = bh.y - ball.y;
+        if (state.suctionTarget) {
+          const dx = state.suctionTarget.x - ball.x;
+          const dy = state.suctionTarget.y - ball.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 150) {
-            ball.vx += (dx / dist) * (bh.force / SUB_STEPS);
-            ball.vy += (dy / dist) * (bh.force / SUB_STEPS);
+          if (dist > 8) {
+            ball.vx = dx * 0.25;
+            ball.vy = dy * 0.25;
+          } else {
+            ball.y = height + 1000;
+            return;
           }
-        });
+          ball.x += ball.vx;
+          ball.y += ball.vy;
+          return;
+        }
 
+        let gravity = GRAVITY / SUB_STEPS;
         state.zones.forEach((z) => {
           if (
             ball.x > z.x &&
@@ -55,7 +65,6 @@ export function updatePhysics(width, height) {
             ball.y < z.y + z.h
           ) {
             gravity = z.power / SUB_STEPS;
-            anyBallInZone = true;
           }
         });
 
@@ -71,17 +80,25 @@ export function updatePhysics(width, height) {
           ball.vx *= -BOUNCE;
         }
 
-        state.movingWalls.forEach((w) => {
-          const halfW = w.w / 2 + 7;
-          const halfH = w.h / 2 + 7;
-          if (
-            ball.x > w.x - halfW &&
-            ball.x < w.x + halfW &&
-            ball.y > w.y - halfH &&
-            ball.y < w.y + halfH
-          ) {
-            ball.vy *= -BOUNCE;
-            ball.y = ball.vy > 0 ? w.y + halfH : w.y - halfH;
+        state.rotatingBars.forEach((b) => {
+          const dx = ball.x - b.x;
+          const dy = ball.y - b.y;
+          const cos = Math.cos(-b.angle);
+          const sin = Math.sin(-b.angle);
+          const rx = dx * cos - dy * sin;
+          const ry = dx * sin + dy * cos;
+          const halfL = b.length / 2 + 7;
+          const halfW = b.width / 2 + 7;
+
+          if (Math.abs(rx) < halfL && Math.abs(ry) < halfW) {
+            let vrx = ball.vx * cos - ball.vy * sin;
+            let vry = ball.vx * sin + ball.vy * cos;
+            const pushOut = (halfW - Math.abs(ry)) * Math.sign(ry);
+            ball.x += -pushOut * sin;
+            ball.y += pushOut * cos;
+            vry *= -BOUNCE;
+            ball.vx = vrx * Math.cos(b.angle) - vry * Math.sin(b.angle);
+            ball.vy = vrx * Math.sin(b.angle) + vry * Math.cos(b.angle);
             window.dispatchEvent(new CustomEvent("pegHit"));
           }
         });
@@ -89,21 +106,26 @@ export function updatePhysics(width, height) {
         state.pegs.forEach((peg) => {
           if (!peg.active) return;
           const dist = Math.sqrt((ball.x - peg.x) ** 2 + (ball.y - peg.y) ** 2);
-          const minDist = peg.type === "gold" ? 24 : 18;
-          if (dist < minDist) {
-            const angle = Math.atan2(ball.y - peg.y, ball.x - peg.x);
-            ball.vx = Math.cos(angle) * 7;
-            ball.vy = Math.sin(angle) * 7;
-            peg.active = false;
-            state.score += peg.type === "gold" ? 1000 : 100;
-            window.dispatchEvent(new CustomEvent("pegHit"));
+          if (dist < peg.radius + 8) {
+            if (peg.type === "suction") {
+              state.suctionTarget = { x: peg.x, y: peg.y };
+              window.dispatchEvent(new CustomEvent("powerUp"));
+              peg.active = false;
+            } else {
+              const angle = Math.atan2(ball.y - peg.y, ball.x - peg.x);
+              ball.vx = Math.cos(angle) * 7;
+              ball.vy = Math.sin(angle) * 7;
+              peg.active = false;
+              state.score += peg.type === "gold" ? 1000 : 100;
+              window.dispatchEvent(new CustomEvent("pegHit"));
+            }
           }
         });
 
         state.portals.forEach((p) => {
           if (
             Math.sqrt((ball.x - p.entry.x) ** 2 + (ball.y - p.entry.y) ** 2) <
-            20
+            22
           ) {
             ball.x = p.exit.x;
             ball.y = p.exit.y;
@@ -113,37 +135,43 @@ export function updatePhysics(width, height) {
       });
     }
 
-    if (anyBallInZone && !state.wasZoneActive) {
-      window.dispatchEvent(new CustomEvent("zoneStart"));
-      state.wasZoneActive = true;
-    } else if (!anyBallInZone && state.wasZoneActive) {
-      window.dispatchEvent(new CustomEvent("zoneStop"));
-      state.wasZoneActive = false;
-    }
+    const activeBalls = state.balls.filter((b) => b.y < height);
+    if (state.suctionTarget && activeBalls.length === 0)
+      state.suctionTarget = null;
 
     const goldLeft = state.pegs.filter(
       (p) => p.type === "gold" && p.active
     ).length;
-    if (goldLeft === 0 && state.pegs.length > 0) {
+    if (goldLeft === 0 && state.pegs.length > 0 && !state.isWin) {
       state.isWin = true;
-      localStorage.setItem(
-        "neon_blast_save",
-        JSON.stringify({
-          level: state.currentLevel + 1,
-          highScore: Math.max(state.highScore, state.score),
-        })
-      );
+      const nextLevel = state.currentLevel + 1;
+      const newHighScore = Math.max(state.highScore, state.score);
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(
+          "neon_blast_save",
+          JSON.stringify({ level: nextLevel, highScore: newHighScore })
+        );
+      }
+      state.currentLevel = nextLevel;
+      state.highScore = newHighScore;
     }
-    if (state.ballsLeft === 0 && state.balls.length === 0 && !state.isWin)
-      state.isGameOver = true;
 
-    return { ...state, balls: state.balls.filter((b) => b.y < height + 50) };
+    if (state.ballsLeft === 0 && activeBalls.length === 0 && !state.isWin)
+      state.isGameOver = true;
+    return { ...state, balls: activeBalls };
   });
 }
 
+// 이 함수가 정상적으로 export 되어야 에러가 해결됩니다!
 export function shootBall(x) {
   gameStore.update((state) => {
-    if (state.ballsLeft <= 0 || state.isWin || state.isGameOver) return state;
+    if (
+      state.ballsLeft <= 0 ||
+      state.isWin ||
+      state.isGameOver ||
+      state.suctionTarget
+    )
+      return state;
     return {
       ...state,
       ballsLeft: state.ballsLeft - 1,
@@ -151,19 +179,6 @@ export function shootBall(x) {
         ...state.balls,
         { x, y: 30, vx: (Math.random() - 0.5) * 2, vy: 3 },
       ],
-    };
-  });
-}
-
-export function useSpecialAbility(x) {
-  gameStore.update((state) => {
-    if (state.ballsLeft < 3 || state.isWin || state.isGameOver) return state;
-    window.dispatchEvent(new CustomEvent("powerUp"));
-    const newBalls = [-2, 0, 2].map((vx) => ({ x, y: 35, vx, vy: 5 }));
-    return {
-      ...state,
-      ballsLeft: state.ballsLeft - 3,
-      balls: [...state.balls, ...newBalls],
     };
   });
 }
