@@ -50,6 +50,15 @@
 
   function render() {
     if (!ctx) return;
+    
+    // 1. Apply Shake
+    ctx.save();
+    if ($gameStore.shake > 0) {
+      const dx = (Math.random() - 0.5) * $gameStore.shake;
+      const dy = (Math.random() - 0.5) * $gameStore.shake;
+      ctx.translate(dx, dy);
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     $gameStore.zones.forEach(z => {
@@ -96,6 +105,49 @@
       ctx.shadowBlur = 10; ctx.shadowColor = '#ff00ff'; ctx.fillStyle = '#fff';
       ctx.beginPath(); ctx.arc(b.x, b.y, 7, 0, Math.PI*2); ctx.fill();
     });
+
+    // 2. Render Particles
+    if ($gameStore.particles && $gameStore.particles.length > 0) {
+      $gameStore.particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color || '#fff';
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    // 3. Render Floating Texts
+    if ($gameStore.floatingTexts && $gameStore.floatingTexts.length > 0) {
+      ctx.textAlign = "center";
+      ctx.font = "bold 16px Arial";
+      $gameStore.floatingTexts.forEach(t => {
+        ctx.globalAlpha = Math.max(0, t.life); // Ensure alpha is non-negative
+        ctx.fillStyle = t.color || '#fff';
+        ctx.fillText(t.text, t.x, t.y);
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    // 4. Render Combo UI (Bottom Right overlay inside canvas)
+    if ($gameStore.currentCombo > 1) {
+      ctx.save();
+      ctx.font = "italic 900 36px Arial";
+      ctx.fillStyle = "#ffff00";
+      ctx.strokeStyle = "#ff00ff";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#ff00ff";
+      ctx.shadowBlur = 20;
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      
+      const text = `${$gameStore.currentCombo} COMBO!`;
+      ctx.translate(canvas.width / 2, canvas.height / 2); // Center
+      ctx.strokeText(text, -100, 0);
+      ctx.fillText(text, -100, 0);
+      ctx.restore();
+    }
+
+    ctx.restore(); // Restore shake transform
   }
 
   function handleShoot(e) {
@@ -147,7 +199,7 @@
         <p class="text-yellow-400 font-black text-sm md:text-base animate-pulse">✨ 모든 황금 핀 제거 시 클리어! ✨</p>
       </div>
       
-      <div class="relative w-full h-full max-h-[50dvh] md:max-h-none aspect-[2/3] touch-none">
+      <div class="relative w-full h-full max-h-[80dvh] md:max-h-none aspect-[2/3] touch-none">
         <canvas bind:this={canvas} width="400" height="600" on:click={handleShoot} 
           on:mousemove={(e) => { const rect = canvas.getBoundingClientRect(); mouseX = (e.clientX - rect.left) * (canvas.width / rect.width); }}
           class="w-full h-full rounded-[2.5rem] border-4 border-[#00f3ff] shadow-[0_0_40px_rgba(0,243,255,0.25)]"

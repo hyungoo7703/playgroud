@@ -35,6 +35,10 @@ export const gameStore = writable({
   highScore: initialSave.highScore || 0,
   wasZoneActive: false,
   suctionTarget: null,
+  particles: [],
+  floatingTexts: [],
+  currentCombo: 0,
+  shake: 0
 });
 
 // 다크 모드 관리

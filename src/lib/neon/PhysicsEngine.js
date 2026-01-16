@@ -29,6 +29,33 @@ export function updatePhysics(width, height) {
   gameStore.update((state) => {
     if (state.isWin || state.isGameOver) return state;
 
+    // --- [NEW] Start of Update Loop Changes ---
+    // 1. Update Shake
+    if (state.shake > 0) state.shake *= 0.9;
+    if (Math.abs(state.shake) < 0.5) state.shake = 0;
+
+    // 2. Update Particles
+    // Simple particle physics: verify particles exist before filtering
+    if (state.particles && state.particles.length > 0) {
+      state.particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.05;
+        p.vy += 0.1; // gravity
+      });
+      state.particles = state.particles.filter(p => p.life > 0);
+    }
+
+    // 3. Update Floating Texts
+    if (state.floatingTexts && state.floatingTexts.length > 0) {
+      state.floatingTexts.forEach(t => {
+        t.y -= 1;
+        t.life -= 0.02;
+      });
+      state.floatingTexts = state.floatingTexts.filter(t => t.life > 0);
+    }
+    // --- [NEW] End of Update Loop Changes ---
+
     state.movingWalls.forEach((w) => {
       w.x += w.dir * w.speed;
       if (Math.abs(w.x - 200) > w.range) w.dir *= -1;
@@ -111,12 +138,33 @@ export function updatePhysics(width, height) {
               state.suctionTarget = { x: peg.x, y: peg.y };
               window.dispatchEvent(new CustomEvent("powerUp"));
               peg.active = false;
+              // Effect for suction
+              state.shake = 10;
+              createExplosion(state, peg.x, peg.y, peg.color);
             } else {
               const angle = Math.atan2(ball.y - peg.y, ball.x - peg.x);
               ball.vx = Math.cos(angle) * 7;
               ball.vy = Math.sin(angle) * 7;
               peg.active = false;
-              state.score += peg.type === "gold" ? 1000 : 100;
+
+              // --- [NEW] Scoring & Combo Logic ---
+              state.currentCombo = (state.currentCombo || 0) + 1;
+              const baseScore = peg.type === "gold" ? 1000 : 100;
+              const comboMultiplier = 1 + (state.currentCombo * 0.1); // +10% per combo
+              const finalScore = Math.floor(baseScore * comboMultiplier);
+              state.score += finalScore;
+
+              // Effects
+              createExplosion(state, peg.x, peg.y, peg.color);
+              state.floatingTexts.push({
+                x: peg.x,
+                y: peg.y,
+                text: `+${finalScore}`,
+                life: 1.0,
+                color: peg.type === "gold" ? "#ffff00" : "#fff"
+              });
+              if (peg.type === 'gold' || state.currentCombo % 5 === 0) state.shake = 5;
+
               window.dispatchEvent(new CustomEvent("pegHit"));
             }
           }
@@ -162,6 +210,18 @@ export function updatePhysics(width, height) {
   });
 }
 
+function createExplosion(state, x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    state.particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8,
+      life: 1.0,
+      color: color
+    });
+  }
+}
+
 // 이 함수가 정상적으로 export 되어야 에러가 해결됩니다!
 export function shootBall(x) {
   gameStore.update((state) => {
@@ -172,9 +232,15 @@ export function shootBall(x) {
       state.suctionTarget
     )
       return state;
+
+    // Reset combo on new shot? 
+    // Usually peggle style is combo per shot, accumulating.
+    // Let's reset combo to 0 for the new shot
+
     return {
       ...state,
       ballsLeft: state.ballsLeft - 1,
+      currentCombo: 0, // Reset combo
       balls: [
         ...state.balls,
         { x, y: 30, vx: (Math.random() - 0.5) * 2, vy: 3 },

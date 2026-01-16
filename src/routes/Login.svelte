@@ -1,6 +1,7 @@
 <script>
   import { navigate } from 'svelte-routing';
-  import { base, isLoggedIn, GAS_URL } from '../lib/store.js';
+  import { base, isLoggedIn } from '../lib/store.js';
+  import { api } from '../lib/api.js';
 
   let accessCode = '';
   let isLoading = false;
@@ -16,23 +17,9 @@
     errorMessage = '';
 
     try {
-      const payload = {
-      action: 'login',
-      password: accessCode
-    };
+      const result = await api.login(accessCode);
 
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'cors', // CORS 모드 명시
-      headers: {
-        // 중요: 'Content-Type': 'application/json'을 절대 쓰지 마세요.
-        // 대신 텍스트로 보냅니다. (GAS는 어차피 e.postData.contents로 읽음)
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(payload)
-    });
 
-      const result = await response.json();
 
       if (result.success) {
         localStorage.setItem('accessCode', accessCode);

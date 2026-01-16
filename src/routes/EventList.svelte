@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { GAS_URL } from '../lib/store.js';
+  import { api } from '../lib/api.js';
   
   let events = [];
   let isLoading = true;
@@ -16,22 +16,11 @@
 
   async function fetchEvents() {
     isLoading = true;
-    try {
-      const response = await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify({ action: 'getEvents' })
-      });
-      const result = await response.json();
-      if (result.success) {
-        events = result.events.sort((a, b) => new Date(a.date) - new Date(b.date));
-      }
-    } finally {
-      isLoading = false;
+    const res = await api.getEvents();
+    if (res.success) {
+      events = res.events.sort((a, b) => new Date(a.date) - new Date(b.date));
     }
+    isLoading = false;
   }
 
   // 수정 버튼 클릭 시 실행
@@ -54,7 +43,6 @@
     isSubmitting = true;
 
     const payload = {
-      action: editingId ? 'updateEvent' : 'addEvent',
       date: newDate,
       title: newTitle,
       category: newCategory
@@ -63,15 +51,10 @@
     if (editingId) payload.id = editingId;
 
     try {
-      const response = await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json();
+      const result = editingId 
+        ? await api.updateEvent(payload)
+        : await api.addEvent(payload);
+
       if (result.success) {
         resetForm();
         await fetchEvents();
