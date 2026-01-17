@@ -29,7 +29,7 @@
     isLoading = true;
     const res = await api.getLedger();
     if (res.success) {
-      ledgerItems = res.ledger.sort((a, b) => new Date(b.date) - new Date(a.date));
+      ledgerItems = res.ledger.sort((a, b) => new Date(a.date) - new Date(b.date));
     } else {
       alert('장부 불러오기 실패: ' + (res.message || '알 수 없는 오류'));
     }
@@ -134,6 +134,7 @@
       const d = String(rule.day || 1).padStart(2, '0'); 
       return {
         date: `${y}-${m}-${d}`,
+        day: parseInt(rule.day || 1),
         type: rule.type || '이체',
         title: rule.title,
         amount: rule.amount,
@@ -181,6 +182,11 @@
     
     // Amount can be string now
     const payload = { ...formData };
+    
+    // Add day field for backend consistency
+    if (payload.date) {
+        payload.day = new Date(payload.date).getDate();
+    }
 
     if (formData.id) {
       res = await api.updateLedger(payload);

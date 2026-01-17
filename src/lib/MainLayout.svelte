@@ -10,6 +10,7 @@
   import EventList from '../routes/EventList.svelte';
   import Settings from '../routes/Settings.svelte';
   import PensionCalculator from '../routes/PensionCalculator.svelte';
+  import Calculator15 from '../routes/Calculator15.svelte';
   import FoodSpinner from '../routes/FoodSpinner.svelte';
   import Login from '../routes/Login.svelte';
   import BulletinBoard from '../routes/BulletinBoard.svelte';
@@ -70,6 +71,7 @@
       <Route path="/" component={Home} /> 
       <Route path="events" component={EventList} /> 
       <Route path="pension-calculator" component={PensionCalculator} /> 
+      <Route path="calculator-15" component={Calculator15} /> 
       <Route path="food-spinner" component={FoodSpinner} /> 
       <Route path="settings" component={Settings} /> 
       <Route path="bulletin-board" component={BulletinBoard} /> 

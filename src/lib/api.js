@@ -44,4 +44,16 @@ export const api = {
     getFoods: () => fetchFromGAS('getFoods'),
     addFood: (name) => fetchFromGAS('addFood', { name }),
     deleteFood: (name) => fetchFromGAS('deleteFood', { name }),
+
+    // Board - Posts
+    getPosts: () => fetchFromGAS('getPosts'),
+    addPost: (data) => fetchFromGAS('addPost', data),
+    updatePost: (data) => fetchFromGAS('updatePost', data),
+    deletePost: (id) => fetchFromGAS('deletePost', { id }),
+    incrementPostView: (id) => fetchFromGAS('incrementPostView', { id }),
+
+    // Board - Comments
+    getComments: (post_id) => fetchFromGAS('getComments', { post_id }),
+    addComment: (data) => fetchFromGAS('addComment', data),
+    deleteComment: (id) => fetchFromGAS('deleteComment', { id }),
 };

@@ -6,7 +6,7 @@
   let isLoading = true;
   
   // 폼 입력 상태
-  let newDate = '';
+  let newDate = new Date().toISOString().split('T')[0];
   let newTitle = '';
   let newCategory = '일반';
   let isSubmitting = false;
@@ -18,7 +18,8 @@
     isLoading = true;
     const res = await api.getEvents();
     if (res.success) {
-      events = res.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+      // 날짜순 정렬 (오름차순: 과거 -> 미래)
+      events = res.events.sort((a, b) => a.date.localeCompare(b.date));
     }
     isLoading = false;
   }
@@ -35,7 +36,8 @@
   // 취소 버튼
   function resetForm() {
     editingId = null;
-    newDate = ''; newTitle = ''; newCategory = '일반';
+    newDate = new Date().toISOString().split('T')[0];
+    newTitle = ''; newCategory = '일반';
   }
 
   async function handleSubmit() {
