@@ -213,18 +213,6 @@ export function updatePhysics(width, height) {
   });
 }
 
-function createExplosion(state, x, y, color) {
-  for (let i = 0; i < 8; i++) {
-    state.particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 8,
-      vy: (Math.random() - 0.5) * 8,
-      life: 1.0,
-      color: color
-    });
-  }
-}
-
 // 이 함수가 정상적으로 export 되어야 에러가 해결됩니다!
 export function shootBall(x) {
   gameStore.update((state) => {
