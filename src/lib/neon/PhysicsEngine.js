@@ -133,7 +133,6 @@ export function updatePhysics(width, height) {
               createExplosion(state, peg.x, peg.y, peg.color);
             } else {
               const angle = Math.atan2(ball.y - peg.y, ball.x - peg.x);
-<<<<<<< HEAD
               ball.vx = Math.cos(angle) * 7;
               ball.vy = Math.sin(angle) * 7;
               peg.active = false;
@@ -157,11 +156,6 @@ export function updatePhysics(width, height) {
               if (peg.type === 'gold' || state.currentCombo % 5 === 0) state.shake = 5;
 
               window.dispatchEvent(new CustomEvent("pegHit"));
-=======
-              ball.vx = Math.cos(angle) * 7; ball.vy = Math.sin(angle) * 7;
-              peg.active = false; state.score += (peg.type === 'gold' ? 1000 : 100);
-              window.dispatchEvent(new CustomEvent('pegHit'));
->>>>>>> 7f0c59d8378c52ca4b9bcccd67517d9da377d2ce
             }
           }
         });
@@ -194,7 +188,6 @@ export function updatePhysics(width, height) {
   });
 }
 
-<<<<<<< HEAD
 function createExplosion(state, x, y, color) {
   for (let i = 0; i < 8; i++) {
     state.particles.push({
@@ -231,11 +224,5 @@ export function shootBall(x) {
         { x, y: 30, vx: (Math.random() - 0.5) * 2, vy: 3 },
       ],
     };
-=======
-export function shootBall(x) {
-  gameStore.update(state => {
-    if (state.ballsLeft <= 0 || state.isWin || state.isGameOver || state.suctionTarget) return state;
-    return { ...state, ballsLeft: state.ballsLeft - 1, balls: [...state.balls, { x, y: 30, vx: (Math.random()-0.5)*2, vy: 3 }] };
->>>>>>> 7f0c59d8378c52ca4b9bcccd67517d9da377d2ce
   });
 }

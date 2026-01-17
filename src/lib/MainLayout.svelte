@@ -41,6 +41,10 @@
   // 로그인 여부나 경로가 바뀔 때마다 체크
   $: $isLoggedIn, $location.pathname, checkAuth();
 
+  $: isGamePage = $location.pathname.includes('/game') || 
+                  $location.pathname.includes('/fruit-pang') || 
+                  $location.pathname.includes('/neon-blast');
+
   // 설치 관련 이벤트
   if (typeof window !== 'undefined') {
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -53,13 +57,13 @@
   }
 </script>
 
-<div class="relative min-h-screen bg-gray-100 dark:bg-gray-900">
+<div class="relative flex flex-col bg-gray-100 dark:bg-gray-900 {isGamePage ? 'h-[100dvh] overflow-hidden' : 'min-h-screen'}">
   {#if $isLoggedIn && $location.pathname !== `${base}/login`} 
     <Header />
     <SideMenu />
   {/if}
 
-  <main class="p-4 sm:p-6">
+  <main class={isGamePage ? 'flex-1 overflow-hidden relative' : 'p-4 sm:p-6'}>
     {#if !$isLoggedIn}
       <Login />
     {:else}

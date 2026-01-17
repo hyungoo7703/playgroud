@@ -223,7 +223,7 @@
   onDestroy(() => clearInterval(gameInterval));
 </script>
 
-<div class="flex flex-col items-center justify-center min-h-screen bg-indigo-50 dark:bg-gray-900 p-4 select-none overflow-hidden">
+<div class="flex flex-col items-center justify-center h-full bg-indigo-50 dark:bg-gray-900 p-4 select-none overflow-hidden">
   
   <div class="w-full max-w-xs flex justify-between items-center mb-4 bg-white dark:bg-gray-800 p-5 rounded-[2rem] shadow-lg border border-white dark:border-gray-700">
     <div class="text-left">

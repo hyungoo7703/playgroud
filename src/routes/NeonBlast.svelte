@@ -167,7 +167,7 @@
   onDestroy(() => { stopPersistentSounds(); cancelAnimationFrame(frame); if (bgmAudio) bgmAudio.pause(); });
 </script>
 
-<div class="flex flex-col items-center w-full h-[100dvh] md:h-auto md:min-h-screen bg-[#050505] text-white select-none font-sans relative overflow-hidden md:overflow-y-auto">
+<div class="flex flex-col items-center w-full h-full md:h-auto md:min-h-screen bg-[#050505] text-white select-none font-sans relative overflow-hidden md:overflow-y-auto">
   
   {#if !isStarted}
     <div class="flex flex-col items-center justify-center min-h-[100dvh] w-full px-6 py-20 z-10">

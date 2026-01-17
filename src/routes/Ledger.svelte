@@ -38,6 +38,7 @@
 
   // User State
   let currentUser = '아빠';
+  let loggedInUser = '아빠';
 
   const CODE_MAP = {
     'master!99': '현구',
@@ -60,7 +61,8 @@
   function checkUser() {
     const code = localStorage.getItem('accessCode');
     if (code && CODE_MAP[code]) {
-      currentUser = CODE_MAP[code];
+      loggedInUser = CODE_MAP[code];
+      currentUser = loggedInUser;
     }
   }
 
@@ -199,6 +201,7 @@
     
     const res = await api.deleteLedger(id);
     if (res.success) {
+      alert('삭제되었습니다.');
       loadLedger();
     } else {
       alert('삭제 실패: ' + res.message);
@@ -266,7 +269,7 @@
     <div class="relative z-10">
       <div class="flex justify-between items-start mb-6">
         <!-- User Selector (Admin Check) -->
-         <select bind:value={currentUser} class="bg-indigo-500/50 text-indigo-100 text-xs font-bold py-1 px-2 rounded-lg border-none outline-none backdrop-blur-sm">
+         <select bind:value={currentUser} disabled={loggedInUser !== '현구'} class="bg-indigo-500/50 text-indigo-100 text-xs font-bold py-1 px-2 rounded-lg border-none outline-none backdrop-blur-sm disabled:opacity-80 disabled:cursor-not-allowed">
            {#each USERS as u}<option value={u}>{u}</option>{/each}
          </select>
 
