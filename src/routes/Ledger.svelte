@@ -341,8 +341,9 @@
   <!-- Content -->
   <main class="px-5 -mt-10 relative z-20 space-y-4">
     {#if isLoading && !showRuleModal}
-      <div class="flex justify-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div class="flex flex-col items-center justify-center py-20 space-y-4">
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600"></div>
+        <p class="text-gray-500 font-bold animate-pulse">장부를 불러오고 있습니다...</p>
       </div>
     {:else if filteredItems.length === 0}
       <div class="bg-white dark:bg-gray-800 rounded-3xl p-10 text-center shadow-sm">

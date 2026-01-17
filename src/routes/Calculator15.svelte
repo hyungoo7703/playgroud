@@ -23,7 +23,7 @@
   }
 </script>
 
-<div class="p-6 max-w-sm mx-auto min-h-screen flex flex-col items-center justify-center space-y-8 pb-20">
+<div class="p-6 max-w-sm mx-auto min-h-screen flex flex-col items-center justify-center space-y-12 pb-20">
   <div class="text-center space-y-2">
       <h2 class="text-3xl font-black text-gray-900 dark:text-white">15% 계산기</h2>
       <p class="text-gray-500 dark:text-gray-400 text-sm">입력한 금액의 15%를 계산합니다.</p>

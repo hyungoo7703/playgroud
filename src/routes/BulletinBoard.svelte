@@ -13,6 +13,7 @@
   let currentPost = null;
   let comments = [];
   let commentContent = "";
+  let isCommentLoading = false;
   let isCommentSubmitting = false;
 
   // User State
@@ -119,10 +120,12 @@
     // We won't re-fetch list just for view count to avoid flicker.
 
     // 2. Load Comments
+    isCommentLoading = true;
     const res = await api.getComments(post.id);
     if (res.success) {
       comments = res.comments;
     }
+    isCommentLoading = false;
   }
 
   async function addComment() {
@@ -138,8 +141,10 @@
     if (res.success) {
       commentContent = "";
       // Reload comments
+      isCommentLoading = true;
       const r = await api.getComments(currentPost.id);
       if (r.success) comments = r.comments;
+      isCommentLoading = false;
     }
     isCommentSubmitting = false;
   }
@@ -149,8 +154,10 @@
     const res = await api.deleteComment(id);
     if(res.success) {
        // Reload comments
+       isCommentLoading = true;
        const r = await api.getComments(currentPost.id);
        if (r.success) comments = r.comments;
+       isCommentLoading = false;
     }
   }
 
@@ -180,8 +187,9 @@
   <!-- Post List -->
   <main class="p-4 space-y-4">
     {#if isLoading}
-      <div class="flex justify-center py-20">
-         <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div class="flex flex-col items-center justify-center py-20 space-y-4">
+         <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600"></div>
+         <p class="text-gray-500 font-bold animate-pulse">게시글을 불러오고 있습니다...</p>
       </div>
     {:else if posts.length === 0}
       <div class="flex flex-col items-center justify-center py-20 text-gray-400">
@@ -329,7 +337,11 @@
               </h3>
 
               <div class="space-y-4 mb-20">
-                 {#if comments.length === 0}
+                 {#if isCommentLoading}
+                    <div class="flex justify-center py-6">
+                       <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                    </div>
+                 {:else if comments.length === 0}
                     <p class="text-sm text-gray-400 text-center py-6">첫 댓글을 남겨보세요!</p>
                  {:else}
                     {#each comments as comment}
