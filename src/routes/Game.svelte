@@ -7,7 +7,7 @@
   }
 </script>
 
-<div class="flex flex-col items-center h-full p-4 pb-12 space-y-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+<div class="flex flex-col items-center w-full min-h-full p-4 pb-12 space-y-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
   
   <header class="text-center pt-8">
     <h1 class="text-3xl font-black text-gray-800 dark:text-white mb-2 tracking-tight">
