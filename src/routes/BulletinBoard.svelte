@@ -214,8 +214,6 @@
           
           <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-snug">{post.title}</h3>
           
-          <p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-3 mb-4">{post.content}</p>
-          
           {#if post.image_url}
              <div class="mb-4 rounded-xl overflow-hidden h-32 bg-gray-100">
                 <img src={post.image_url} alt="Attachment" class="w-full h-full object-cover" />
