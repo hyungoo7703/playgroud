@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
   import { api } from '../lib/api.js';
   
   let events = [];
@@ -13,6 +14,9 @@
   
   // 수정 모드 상태
   let editingId = null; 
+
+  // D-Day 모달 상태
+  let showDDayModal = false;
 
   async function fetchEvents() {
     isLoading = true;
@@ -70,16 +74,36 @@
     }
   }
 
+  function setDDay(event) {
+    if (!confirm(`'${event.title}' 일정을 홈 화면 D-Day로 설정할까요?`)) return;
+    localStorage.setItem('dDayEvent', JSON.stringify(event));
+    showDDayModal = false;
+    alert('설정되었습니다. 홈 화면에서 확인해보세요!');
+  }
+
+  // 미래 일정만 필터링 (오늘 포함)
+  $: futureEvents = events.filter(e => e.date >= new Date().toISOString().split('T')[0]);
+
   onMount(fetchEvents);
 </script>
 
-<div class="p-4 max-w-md mx-auto space-y-6">
+<div class="p-4 max-w-md mx-auto space-y-6 pb-24">
   <div class="flex items-center justify-between">
     <h2 class="text-2xl font-black text-gray-900 dark:text-white">가족 일정</h2>
     {#if editingId}
       <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-lg font-bold">수정 모드</span>
     {/if}
   </div>
+
+  <!-- D-Day Button -->
+  <button 
+    on:click={() => showDDayModal = true}
+    disabled={isLoading}
+    class="w-full py-3 bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-300 font-bold rounded-2xl active:scale-95 transition-all flex items-center justify-center gap-2 border border-pink-100 dark:border-pink-800/50"
+  >
+    <span class="text-lg">🎉</span>
+    홈 화면 D-Day 설정하기
+  </button>
 
   <div class="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-xl border-2 transition-all {editingId ? 'border-amber-400' : 'border-transparent'}">
     <div class="space-y-3">
@@ -130,4 +154,35 @@
       {/each}
     {/if}
   </div>
+
+  <!-- D-Day Selection Modal -->
+  {#if showDDayModal}
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" transition:fade>
+      <div class="w-full max-w-sm bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-2xl flex flex-col max-h-[80vh]" transition:fly={{ y: 20 }}>
+        <h3 class="text-xl font-black text-gray-900 dark:text-white mb-4">D-Day 설정</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">홈 화면 상단에 띄울 일정을 선택하세요.</p>
+        
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+          {#if futureEvents.length === 0}
+            <p class="text-center text-gray-400 py-10">설정할 수 있는 미래 일정이 없어요.</p>
+          {:else}
+            {#each futureEvents as event}
+              <button 
+                on:click={() => setDDay(event)}
+                class="w-full text-left p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors group"
+              >
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs font-bold text-indigo-500">{event.date}</span>
+                  <span class="text-xs bg-white dark:bg-gray-700 px-2 py-0.5 rounded text-gray-400 group-hover:text-indigo-500">선택</span>
+                </div>
+                <div class="font-bold text-gray-800 dark:text-gray-200">{event.title}</div>
+              </button>
+            {/each}
+          {/if}
+        </div>
+
+        <button on:click={() => showDDayModal = false} class="mt-4 w-full py-3 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 font-bold rounded-xl">닫기</button>
+      </div>
+    </div>
+  {/if}
 </div>

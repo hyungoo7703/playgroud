@@ -8,7 +8,30 @@
   let isLoading = true;
   const userName = localStorage.getItem('userName') || '가족';
 
+  let dDayEvent = null;
+  let dDayDiff = null;
+
   onMount(async () => {
+    // 1. D-Day Check
+    const storedDDay = localStorage.getItem('dDayEvent');
+    if (storedDDay) {
+      const event = JSON.parse(storedDDay);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const target = new Date(event.date);
+      target.setHours(0,0,0,0);
+      
+      const diffTime = target - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays >= 0) {
+        dDayEvent = event;
+        dDayDiff = diffDays;
+      } else {
+        localStorage.removeItem('dDayEvent'); // Clean up expired
+      }
+    }
+
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
@@ -28,7 +51,7 @@
         monthlyEvents = result.events.filter(event => {
           const eventDate = new Date(event.date);
           return eventDate.getFullYear() === currentYear && eventDate.getMonth() === currentMonth;
-        }).sort((a, b) => new Date(a.date) - new Date(b.date));
+        }).sort((a, b) => a.date.localeCompare(b.date)); // Use string sort for consistency
       }
     } catch (e) {
       console.error('데이터 로드 실패:', e);
@@ -57,6 +80,23 @@
     </div>
     <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-600/20 rounded-full blur-3xl"></div>
   </header>
+
+  <!-- D-Day Banner -->
+  {#if dDayEvent}
+    <div in:fly={{ y: -20, duration: 500 }} class="relative bg-gradient-to-r from-pink-500 to-rose-500 rounded-[2rem] p-6 text-white shadow-lg overflow-hidden flex justify-between items-center group cursor-pointer" on:click={() => navigateTo('events')}>
+      <div class="relative z-10">
+         <span class="text-pink-200 text-xs font-bold uppercase tracking-wider mb-1 block">Coming Up</span>
+         <h3 class="font-black text-xl leading-tight text-white">{dDayEvent.title}</h3>
+         <p class="text-xs text-white/80 mt-1">{dDayEvent.date}</p>
+      </div>
+      <div class="relative z-10 flex flex-col items-center justify-center bg-white/20 backdrop-blur-md rounded-2xl w-16 h-16 shadow-inner border border-white/30">
+        <span class="text-[10px] font-bold text-white/90">D-Day</span>
+        <span class="text-2xl font-black leading-none">{dDayDiff === 0 ? 'DAY' : dDayDiff}</span>
+      </div>
+      <!-- Deco -->
+      <div class="absolute -left-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+    </div>
+  {/if}
 
   <section class="grid grid-cols-4 gap-2">
     <button on:click={() => navigateTo('events')} class="flex flex-col items-center p-3 bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 active:scale-95 transition-all">
