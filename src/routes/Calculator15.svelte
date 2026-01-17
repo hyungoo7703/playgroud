@@ -23,7 +23,7 @@
   }
 </script>
 
-<div class="p-6 max-w-sm mx-auto min-h-screen flex flex-col items-center justify-center space-y-12 pb-20">
+<div class="p-6 max-w-sm mx-auto flex flex-col items-center justify-center space-y-16 py-20">
   <div class="text-center space-y-2">
       <h2 class="text-3xl font-black text-gray-900 dark:text-white">15% 계산기</h2>
       <p class="text-gray-500 dark:text-gray-400 text-sm">입력한 금액의 15%를 계산합니다.</p>
@@ -40,7 +40,7 @@
   </div>
 
   <div class="w-full relative">
-     <div class="absolute left-1/2 -top-4 -translate-x-1/2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+     <div class="absolute left-1/2 -top-4 -translate-x-1/2 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full z-10">
         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
      </div>
      
