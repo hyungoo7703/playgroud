@@ -39,6 +39,7 @@
   // User State
   let currentUser = '아빠';
   let loggedInUser = '아빠';
+  let showOnlyMine = false;
 
   const CODE_MAP = {
     'master!99': '현구',
@@ -248,7 +249,13 @@
   // Filter items by month
   $: filteredItems = ledgerItems.filter(item => {
     const d = new Date(item.date);
-    return d.getFullYear() === displayYear && (d.getMonth() + 1) === displayMonth;
+    const isMonthMatch = d.getFullYear() === displayYear && (d.getMonth() + 1) === displayMonth;
+    if (!isMonthMatch) return false;
+    
+    if (showOnlyMine) {
+      return item.giver === currentUser || item.receiver === currentUser;
+    }
+    return true;
   });
 
   // Calculate totals from filtered items
@@ -269,9 +276,17 @@
     <div class="relative z-10">
       <div class="flex justify-between items-start mb-6">
         <!-- User Selector (Admin Check) -->
-         <select bind:value={currentUser} disabled={loggedInUser !== '현구'} class="bg-indigo-500/50 text-indigo-100 text-xs font-bold py-1 px-2 rounded-lg border-none outline-none backdrop-blur-sm disabled:opacity-80 disabled:cursor-not-allowed">
-           {#each USERS as u}<option value={u}>{u}</option>{/each}
-         </select>
+         <div class="flex flex-col gap-2">
+           <select bind:value={currentUser} disabled={loggedInUser !== '현구'} class="bg-indigo-500/50 text-indigo-100 text-xs font-bold py-1 px-2 rounded-lg border-none outline-none backdrop-blur-sm disabled:opacity-80 disabled:cursor-not-allowed">
+             {#each USERS as u}<option value={u}>{u}</option>{/each}
+           </select>
+           <button 
+             on:click={() => showOnlyMine = !showOnlyMine}
+             class="text-[10px] font-bold px-2 py-1 rounded-lg transition-all border {showOnlyMine ? 'bg-white text-indigo-600 border-white' : 'bg-transparent text-indigo-300 border-indigo-400/50 hover:bg-indigo-500/30'}"
+           >
+             내 내역만
+           </button>
+         </div>
 
         <div class="flex items-center gap-4 bg-indigo-500/50 rounded-full px-4 py-1.5 backdrop-blur-sm">
           <button on:click={prevMonth} class="text-indigo-200 hover:text-white active:scale-75 transition-all">
