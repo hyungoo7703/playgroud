@@ -4,13 +4,12 @@
   import { quintOut, bounceOut } from 'svelte/easing';
   import { base } from '../lib/store.js';
 
-  // --- 1. 게임 설정 ---
+  // --- 1. 설정 ---
   const ROWS = 8;
   const COLS = 7;
   const FRUITS = ['🍎', '🍊', '🍇', '🥝', '🍋'];
   const BOMB = '💣';
   const MUSHROOM = '🍄';
-  // 사운드 파일에서 '톡' 소리가 나는 시작 지점들 (초 단위)
   const POP_START_TIMES = [0.1, 0.7, 1.3, 1.9, 2.5]; 
 
   // --- 2. 상태 관리 ---
@@ -28,28 +27,36 @@
   let gameOver = false;
   let gameInterval = null;
 
-  // 사운드 객체 생성
-  const popSound = typeof Audio !== 'undefined' ? new Audio(`${base}/sounds/pop.mp3`) : null;
+  // 사운드 관리 (중첩 방지용 전역 객체)
+  let currentAudio = null;
+  const popSoundPath = `${base}/sounds/pop.mp3`;
 
-  /**
-   * 사운드 재생 함수: 특정 초에서 시작해 '톡' 하고 짧게 끊음
-   */
+  // 사운드 재생 함수: 중첩 차단 로직 적용
   function playPop(type = 'normal') {
-    if (!popSound || isMuted) return;
+    if (isMuted) return;
     
-    const s = popSound.cloneNode();
+    // 이전 소리가 있다면 즉시 정지 및 제거
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+
+    const s = new Audio(popSoundPath);
     const startTime = POP_START_TIMES[Math.floor(Math.random() * POP_START_TIMES.length)];
     
     s.currentTime = startTime;
     s.playbackRate = type === 'bomb' ? 0.8 : (type === 'refill' ? 1.4 : 1.1);
-    s.volume = 0.5;
+    s.volume = 0.4;
     
+    currentAudio = s;
     s.play().catch(() => {});
     
-    // 150ms 후에 사운드를 강제로 멈춰서 '톡' 소리만 나게 함
+    // 0.15초만 짧게 재생하고 정지 (중첩 방지 핵심)
     setTimeout(() => {
-      s.pause();
-      s.remove();
+      if (currentAudio === s) {
+        s.pause();
+        currentAudio = null;
+      }
     }, 150); 
   }
 
@@ -58,15 +65,16 @@
     energy = 100;
     gameInterval = setInterval(() => {
       if (isHardMode && !gameOver) {
-        const drainAmount = 0.7 + (score / 3500); 
-        energy = Math.max(0, energy - drainAmount);
+        const speedMultiplier = 1 + (score / 5000);
+        energy = Math.max(0, energy - (0.6 * speedMultiplier));
+        
         if (energy <= 0) handleGameOver();
       }
     }, 100);
   }
 
   function stopEnergyDrain() {
-    if (gameInterval) { clearInterval(gameInterval); gameInterval = null; }
+    if (gameInterval) clearInterval(gameInterval);
   }
 
   function handleGameOver() {
@@ -96,7 +104,7 @@
     if (!target) return;
 
     if (target === MUSHROOM) {
-      energy = Math.max(0, energy - 25);
+      energy = Math.max(0, energy - 20);
       playPop('bomb');
       grid[r][c] = null;
       grid = [...grid];
@@ -114,11 +122,11 @@
     const group = getConnectedGroup(r, c, target);
     if (group.length >= 2) {
       isProcessing = true;
-      playPop('normal');
+      playPop('normal'); // 여기서 한 번만 호출됨
       createParticles(r, c, target);
 
       score += group.length * 10;
-      if (isHardMode) energy = Math.min(100, energy + (group.length * 1.8));
+      if (isHardMode) energy = Math.min(100, energy + (group.length * 1.5));
       
       const shouldCreateBomb = group.length >= 5;
       group.forEach(({ r: row, c: col }, index) => {
@@ -151,7 +159,7 @@
       for (let r = 0; r < ROWS; r++) {
         if (grid[r][c] === null) {
           const rand = Math.random();
-          if (isHardMode && rand < 0.08) grid[r][c] = MUSHROOM;
+          if (isHardMode && rand < 0.07) grid[r][c] = MUSHROOM;
           else grid[r][c] = FRUITS[Math.floor(Math.random() * FRUITS.length)];
           hasRefilled = true;
         }
@@ -171,7 +179,7 @@
       id: Math.random(),
       angle: (i * 60) * (Math.PI / 180),
       emoji,
-      dist: 45
+      dist: 40
     }));
     particles = [...particles, { r, c, items: newItems }];
     setTimeout(() => { particles = particles.filter(p => p.items !== newItems); }, 600);
@@ -211,44 +219,44 @@
   onDestroy(() => stopEnergyDrain());
 </script>
 
-<div class="flex flex-col items-center justify-between w-full h-[100dvh] bg-indigo-50 dark:bg-gray-900 p-2 select-none overflow-hidden font-sans">
+<div class="flex flex-col items-center justify-between w-full h-[100dvh] bg-slate-50 dark:bg-gray-900 p-3 select-none overflow-hidden font-sans">
   
-  <div class="w-full max-w-xs flex flex-col gap-2 mt-2">
-    <div class="text-center bg-indigo-600 text-white py-1 rounded-full shadow-sm">
-       <p class="text-[11px] font-bold">🍎 2개 이상 연결된 과일을 터치하세요!</p>
+  <div class="w-full max-w-xs space-y-2 pt-2">
+    <div class="text-center bg-indigo-600 text-white py-1.5 rounded-full shadow-md">
+       <p class="text-[12px] font-black italic">🍎 2개 이상 연결된 과일을 터치!</p>
     </div>
 
-    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-3xl shadow-md border-b-2 border-indigo-100">
+    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-[2rem] shadow-xl border-b-4 border-indigo-100">
       <div class="flex flex-col">
-        <span class="text-[9px] font-bold text-gray-400 uppercase">Score</span>
-        <span class="text-2xl font-black text-indigo-600 leading-none">{score}</span>
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Score</span>
+        <span class="text-3xl font-black text-indigo-600 leading-none">{score}</span>
       </div>
-      <button on:click={() => isMuted = !isMuted} class="p-2 bg-indigo-50 dark:bg-gray-700 rounded-full text-lg">
+      <button on:click={() => isMuted = !isMuted} class="p-2.5 bg-slate-100 dark:bg-gray-700 rounded-2xl text-xl">
         {isMuted ? '🔇' : '🔊'}
       </button>
       <div class="flex flex-col items-end">
-        <span class="text-[9px] font-bold text-gray-400 uppercase">Best</span>
-        <span class="text-2xl font-black {isNewRecord ? 'text-orange-500 animate-bounce' : 'text-purple-600'} leading-none">{bestScore}</span>
+        <span class="text-[10px] font-bold text-gray-400 uppercase">Best</span>
+        <span class="text-3xl font-black {isNewRecord ? 'text-orange-500 animate-bounce' : 'text-purple-600'} leading-none">{bestScore}</span>
       </div>
+    </div>
+
+    <div class="w-full h-5 bg-slate-200 dark:bg-gray-800 rounded-full p-1 shadow-inner transition-all {isHardMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}">
+      <div 
+        class="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-150 ease-linear"
+        style="width: {energy}%"
+      ></div>
     </div>
   </div>
 
-  <div class="w-full max-w-xs h-4 bg-gray-200 dark:bg-gray-800 rounded-full p-0.5 shadow-inner mt-1 {isHardMode ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'} transition-all">
-    <div 
-      class="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-150 ease-linear shadow-sm"
-      style="width: {energy}%"
-    ></div>
-  </div>
-
-  <div class="relative flex-1 flex items-center justify-center w-full max-h-[55%] my-1 {isShaking ? 'shake-animation' : ''}">
-    <div class="bg-indigo-200 dark:bg-gray-700 p-2 rounded-[1.8rem] shadow-xl border-2 border-white">
-      <div class="grid grid-cols-7 gap-1 bg-white/30 rounded-[1.4rem] p-1">
+  <div class="flex-1 min-h-0 w-full flex items-center justify-center relative {isShaking ? 'shake-animation' : ''}">
+    <div class="bg-indigo-200 dark:bg-gray-700 p-2.5 rounded-[2.5rem] shadow-2xl border-4 border-white">
+      <div class="grid grid-cols-7 gap-1 bg-white/40 rounded-[2rem] p-2">
         {#each grid as row, r}
           {#each row as cell, c}
-            <div class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center relative">
+            <div class="w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 flex items-center justify-center relative">
               {#if cell}
                 <button 
-                  class="w-full h-full flex items-center justify-center text-xl sm:text-2xl bg-white dark:bg-gray-800 rounded-lg shadow active:scale-75 transition-all duration-200"
+                  class="w-full h-full flex items-center justify-center text-2xl bg-white dark:bg-gray-800 rounded-xl shadow-md active:scale-75 transition-all duration-200"
                   on:click={() => handleCellClick(r, c)}
                   in:fly={{ y: -30, duration: 400, easing: bounceOut, delay: r * 15 }}
                 >
@@ -262,12 +270,12 @@
     </div>
 
     {#if gameOver}
-      <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 rounded-[1.8rem] backdrop-blur-sm" in:fade>
-        <span class="text-6xl mb-2">⏰</span>
-        <h2 class="text-3xl font-black text-white mb-1">게임 종료</h2>
-        <p class="text-indigo-300 font-bold mb-6">최종 점수: {score}점</p>
-        <button on:click={() => initGame()} class="bg-white text-indigo-600 px-8 py-3 rounded-2xl font-black shadow-lg active:scale-95">
-          다시 도전!
+      <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 rounded-[2.5rem] backdrop-blur-md" in:fade>
+        <span class="text-7xl mb-4">😵</span>
+        <h2 class="text-4xl font-black text-white mb-2">게임 종료!</h2>
+        <p class="text-indigo-300 font-bold text-xl mb-8">{score} 점 획득!</p>
+        <button on:click={() => initGame()} class="bg-white text-indigo-600 px-10 py-4 rounded-2xl font-black shadow-2xl active:scale-95 transition-all">
+          다시 도전하기
         </button>
       </div>
     {/if}
@@ -276,7 +284,7 @@
       {#each particles as group}
         {#each group.items as p}
           <div 
-            class="absolute text-lg"
+            class="absolute text-xl"
             style="left: {group.c * 14.3 + 7}%; top: {group.r * 12.5 + 6}%;"
             in:fly={{ x: Math.cos(p.angle) * p.dist, y: Math.sin(p.angle) * p.dist, duration: 500, easing: quintOut }}
             out:fade
@@ -288,21 +296,21 @@
     </div>
   </div>
 
-  <div class="w-full max-w-[280px] flex flex-col gap-2 mb-4">
-    <div class="grid grid-cols-2 gap-2 p-1 bg-gray-200 dark:bg-gray-800 rounded-2xl">
+  <div class="w-full max-w-[300px] flex flex-col gap-3 pb-8">
+    <div class="grid grid-cols-2 gap-3 p-1.5 bg-slate-200 dark:bg-gray-800 rounded-[1.8rem]">
       <button 
         on:click={() => { isHardMode = false; initGame(true); }}
-        class="py-2.5 rounded-xl font-black text-[12px] transition-all { !isHardMode ? 'bg-white text-indigo-600 shadow' : 'text-gray-500' }">
+        class="py-3 rounded-[1.4rem] font-black text-[13px] transition-all { !isHardMode ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500' }">
         일반 모드
       </button>
       <button 
         on:click={() => { isHardMode = true; initGame(true); }}
-        class="py-2.5 rounded-xl font-black text-[12px] transition-all { isHardMode ? 'bg-red-500 text-white shadow' : 'text-gray-500' }">
+        class="py-3 rounded-[1.4rem] font-black text-[13px] transition-all { isHardMode ? 'bg-red-500 text-white shadow-lg' : 'text-gray-500' }">
         하드 모드 🔥
       </button>
     </div>
 
-    <button on:click={() => initGame()} class="w-full bg-gray-900 dark:bg-gray-100 dark:text-black text-white py-3.5 rounded-2xl font-black text-sm shadow-md active:scale-95">
+    <button on:click={() => initGame()} class="w-full bg-slate-900 dark:bg-slate-100 dark:text-black text-white py-4.5 rounded-[1.8rem] font-black text-lg shadow-xl active:scale-95 transition-all">
       새 게임 시작
     </button>
   </div>
@@ -319,5 +327,5 @@
     40%, 60% { transform: translate3d(3px, 0, 0); }
   }
   :global(body) { background-color: #f8fafc; margin: 0; padding: 0; overflow: hidden; }
-  button { -webkit-tap-highlight-color: transparent; }
+  button { -webkit-tap-highlight-color: transparent; outline: none; }
 </style>
