@@ -20,9 +20,9 @@
     
     <button 
       on:click={() => goTo('fruit-pang')}
-      class="relative group overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-sky-200 via-blue-400 to-indigo-400 p-1 text-left shadow-xl transition-all hover:scale-[1.02] active:scale-95"
+      class="relative group overflow-hidden rounded-[2.5rem] border-4 border-sky-200/50 bg-white dark:bg-gray-800 text-left shadow-xl transition-all hover:scale-[1.02] active:scale-95"
     >
-      <div class="absolute right-0 top-0 w-32 h-32 bg-white/20 rounded-bl-[100px] transition-all group-hover:scale-110"></div>
+      <div class="absolute right-0 top-0 w-32 h-32 bg-sky-100/50 rounded-bl-[100px] transition-all group-hover:scale-110"></div>
       <div class="relative flex h-full flex-col justify-between bg-white dark:bg-gray-800 rounded-[2.3rem] p-7 z-10">
         <div>
           <span class="inline-block px-3 py-1 mb-3 text-[10px] font-bold tracking-wider text-sky-500 uppercase bg-sky-50 rounded-full dark:bg-sky-900/30 dark:text-sky-300">
