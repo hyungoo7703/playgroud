@@ -345,7 +345,7 @@
   }
 
   function spawnBall(x, y, dx, dy) {
-    const speed = 9 + (level * 0.8);
+    const speed = 6 + (level * 0.6);
     balls.push({
         x: x || canvas.width / 2,
         y: y || canvas.height - 40,
@@ -358,7 +358,7 @@
   }
 
   function spawnMultiBalls(x, y) {
-      const speed = 9 + (level * 0.8);
+      const speed = 6 + (level * 0.6);
       [-0.5, 0, 0.5].forEach(offset => {
           balls.push({
             x: x,
@@ -557,7 +557,7 @@
   {#if isGameOver}
     <div class="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-md pointer-events-auto" in:fade>
        <div class="text-center p-8 bg-gray-900 border border-gray-700 rounded-3xl shadow-2xl">
-          <h2 class="text-5xl font-black text-red-500 mb-2 drop-shadow-lg">게임 오버</h2>
+          <h2 class="text-5xl font-black text-red-500 mb-2 drop-shadow-lg">GAME OVER</h2>
           <p class="text-gray-400 mb-8">도달한 레벨: {level}</p>
           <div class="text-3xl font-bold text-white mb-8">최종 점수: {score}</div>
           
