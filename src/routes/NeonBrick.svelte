@@ -345,7 +345,7 @@
   }
 
   function spawnBall(x, y, dx, dy) {
-    const speed = 11 + (level * 1.0);
+    const speed = 9 + (level * 0.8);
     balls.push({
         x: x || canvas.width / 2,
         y: y || canvas.height - 40,
@@ -358,7 +358,7 @@
   }
 
   function spawnMultiBalls(x, y) {
-      const speed = 11 + (level * 1.0);
+      const speed = 9 + (level * 0.8);
       [-0.5, 0, 0.5].forEach(offset => {
           balls.push({
             x: x,
@@ -527,11 +527,11 @@
     <!-- Top HUD -->
     <div class="flex justify-between items-start text-white drop-shadow-lg">
       <div class="flex flex-col">
-         <span class="text-xs text-gray-400 font-bold uppercase">Level</span>
+         <span class="text-xs text-gray-400 font-bold uppercase">레벨</span>
          <span class="text-3xl font-black text-yellow-400">{level}</span>
       </div>
       <div class="flex flex-col items-end">
-         <span class="text-xs text-gray-400 font-bold uppercase">Score</span>
+         <span class="text-xs text-gray-400 font-bold uppercase">점수</span>
          <span class="text-3xl font-black text-cyan-400">{score}</span>
       </div>
     </div>
@@ -548,8 +548,8 @@
   {#if !isGameStarted && !isGameOver}
     <div class="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto" on:click={launchGame}>
        <div class="text-center animate-bounce">
-          <p class="text-cyan-400 text-lg font-bold mb-2 uppercase tracking-widest">Tap to Start</p>
-          <div class="text-white text-opacity-50 text-sm">Drag to move paddle</div>
+          <p class="text-cyan-400 text-lg font-bold mb-2 uppercase tracking-widest">터치하여 시작</p>
+          <div class="text-white text-opacity-50 text-sm">화면을 드래그하여 패들을 움직이세요</div>
        </div>
     </div>
   {/if}
@@ -557,12 +557,12 @@
   {#if isGameOver}
     <div class="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-md pointer-events-auto" in:fade>
        <div class="text-center p-8 bg-gray-900 border border-gray-700 rounded-3xl shadow-2xl">
-          <h2 class="text-5xl font-black text-red-500 mb-2 drop-shadow-lg">GAME OVER</h2>
-          <p class="text-gray-400 mb-8">Level {level} reached</p>
-          <div class="text-3xl font-bold text-white mb-8">Score: {score}</div>
+          <h2 class="text-5xl font-black text-red-500 mb-2 drop-shadow-lg">게임 오버</h2>
+          <p class="text-gray-400 mb-8">도달한 레벨: {level}</p>
+          <div class="text-3xl font-bold text-white mb-8">최종 점수: {score}</div>
           
           <button on:click={restartGame} class="px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-2xl shadow-[0_0_20px_rgba(8,145,178,0.5)] transition-all">
-             TRY AGAIN
+             다시 도전하기
           </button>
        </div>
     </div>
