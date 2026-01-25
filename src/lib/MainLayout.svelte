@@ -18,6 +18,7 @@
   import Game from '../routes/Game.svelte';
   import FruitPang from '../routes/FruitPang.svelte';
   import NeonBlast from '../routes/NeonBlast.svelte';
+  import NeonBrick from '../routes/NeonBrick.svelte';
 
   const location = useLocation();
 
@@ -43,7 +44,8 @@
   $: $isLoggedIn, $location.pathname, checkAuth();
 
   $: isGameplayPage = $location.pathname.includes('/fruit-pang') || 
-                      $location.pathname.includes('/neon-blast');
+                      $location.pathname.includes('/neon-blast') ||
+                      $location.pathname.includes('/neon-brick');
 
   // 설치 관련 이벤트
   if (typeof window !== 'undefined') {
@@ -78,6 +80,7 @@
       <Route path="game" component={Game} />
       <Route path="fruit-pang" component={FruitPang} />
       <Route path="neon-blast" component={NeonBlast} />
+      <Route path="neon-brick" component={NeonBrick} />
     {/if}
   </main>
 </div>

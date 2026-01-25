@@ -10,7 +10,9 @@
   const FRUITS = ['🍎', '🍊', '🍇', '🥝', '🍋'];
   const BOMB = '💣';
   const MUSHROOM = '🍄';
-  const POP_START_TIMES = [0.1, 0.7, 1.3, 1.9, 2.5]; 
+  // 사운드 관리
+  const popSoundPath = `${base}/sounds/pop.mp3`;
+  const bombSoundPath = `${base}/sounds/bomb-explosion.mp3`;
 
   // --- 2. 상태 관리 ---
   let grid = [];
@@ -27,35 +29,35 @@
   let gameOver = false;
   let gameInterval = null;
 
-  // 사운드 관리 (중첩 방지용 전역 객체)
-  let currentAudio = null;
-  const popSoundPath = `${base}/sounds/pop.mp3`;
+  onMount(() => {
+    bestScore = parseInt(localStorage.getItem('fruitBestScore') || '0');
+    initGame();
+  }); 
 
-  // 사운드 재생 함수: 중첩 차단 로직 적용
-  // 사운드 재생 함수: 0.1초만 재생 (스프라이트 문제 해결)
   function playPop(type = 'normal') {
     if (isMuted) return;
-    
-    // 이전 소리가 있다면 즉시 정지 및 제거
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
+
+    let soundPath = popSoundPath;
+    let volume = 0.4;
+    let startTime = 0.1;
+    let duration = 150;
+
+    if (type === 'bomb') {
+      soundPath = bombSoundPath;
+      volume = 0.6;
+      startTime = 0; // 폭탄은 처음부터 재생
+      duration = 500; // 폭탄은 조금 더 길게
     }
 
-    const s = new Audio(popSoundPath);
-    s.currentTime = 0; 
-    s.volume = 0.4;
-    
-    currentAudio = s;
+    const s = new Audio(soundPath);
+    s.currentTime = startTime; 
+    s.volume = volume;
     s.play().catch(() => {});
 
-    // 0.1초 후에 강제 정지
     setTimeout(() => {
-      if (currentAudio === s) {
-        s.pause();
-        currentAudio = null;
-      }
-    }, 100);
+      s.pause();
+      s.remove();
+    }, duration);
   }
 
   function startEnergyDrain() {
@@ -65,7 +67,6 @@
       if (isHardMode && !gameOver) {
         const speedMultiplier = 1 + (score / 5000);
         energy = Math.max(0, energy - (0.6 * speedMultiplier));
-        
         if (energy <= 0) handleGameOver();
       }
     }, 100);
@@ -120,7 +121,7 @@
     const group = getConnectedGroup(r, c, target);
     if (group.length >= 2) {
       isProcessing = true;
-      playPop('normal'); // 여기서 한 번만 호출됨
+      playPop('normal'); // 한 그룹 터질 때 딱 한 번 재생
       createParticles(r, c, target);
 
       score += group.length * 10;
@@ -163,7 +164,11 @@
         }
       }
     }
-    if (hasRefilled) { playPop('refill'); grid = [...grid]; }
+    if (hasRefilled) { 
+        // 리필 소리는 터지는 소리와 겹치지 않게 아주 살짝 지연해서 재생 가능
+        setTimeout(() => playPop('refill'), 50); 
+        grid = [...grid]; 
+    }
     if (score > bestScore) {
       bestScore = score;
       isNewRecord = true;
@@ -210,51 +215,63 @@
     setTimeout(() => { isShaking = false; applyGravityOnly(); }, 300);
   }
 
-  onMount(() => {
-    bestScore = parseInt(localStorage.getItem('fruitBestScore') || '0');
-    initGame();
-  });
   onDestroy(() => stopEnergyDrain());
 </script>
 
-<div class="flex flex-col items-center justify-between w-full h-[100dvh] bg-slate-50 dark:bg-gray-900 p-3 select-none overflow-hidden font-sans">
+<div class="flex flex-col items-center justify-between w-full h-[100dvh] bg-slate-50 dark:bg-gray-900 px-0 py-2 select-none overflow-hidden font-sans">
   
-  <div class="w-full max-w-xs space-y-2 pt-2">
-    <div class="text-center bg-indigo-600 text-white py-1.5 rounded-full shadow-md">
-       <p class="text-[12px] font-black italic">🍎 2개 이상 연결된 과일을 터치!</p>
+  <div class="w-full max-w-xs space-y-1.5 px-4 pt-1">
+    <div class="text-center bg-indigo-600 text-white py-1 rounded-full shadow-md">
+       <p class="text-[11px] font-black italic">🍎 2개 이상 연결된 과일을 터치!</p>
     </div>
 
-    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 rounded-[2rem] shadow-xl border-b-4 border-indigo-100">
+    <!-- Compact Score Board -->
+    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-[1.5rem] shadow-xl border-b-4 border-indigo-100">
       <div class="flex flex-col">
-        <span class="text-[10px] font-bold text-gray-400 uppercase">Score</span>
-        <span class="text-3xl font-black text-indigo-600 leading-none">{score}</span>
+        <span class="text-[9px] font-bold text-gray-400 uppercase">Score</span>
+        <span class="text-2xl font-black text-indigo-600 leading-none">{score}</span>
       </div>
-      <button on:click={() => isMuted = !isMuted} class="p-2.5 bg-slate-100 dark:bg-gray-700 rounded-2xl text-xl">
+      <button on:click={() => isMuted = !isMuted} class="p-2 bg-slate-100 dark:bg-gray-700 rounded-xl text-lg">
         {isMuted ? '🔇' : '🔊'}
       </button>
       <div class="flex flex-col items-end">
-        <span class="text-[10px] font-bold text-gray-400 uppercase">Best</span>
-        <span class="text-3xl font-black {isNewRecord ? 'text-orange-500 animate-bounce' : 'text-purple-600'} leading-none">{bestScore}</span>
+        <span class="text-[9px] font-bold text-gray-400 uppercase">Best</span>
+        <span class="text-2xl font-black {isNewRecord ? 'text-orange-500 animate-bounce' : 'text-purple-600'} leading-none">{bestScore}</span>
       </div>
     </div>
 
-    <div class="w-full h-5 bg-slate-200 dark:bg-gray-800 rounded-full p-1 shadow-inner transition-all {isHardMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}">
+    <div class="w-full h-4 bg-slate-200 dark:bg-gray-800 rounded-full p-1 shadow-inner transition-all {isHardMode ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}">
       <div 
         class="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-400 to-green-500 transition-all duration-150 ease-linear"
         style="width: {energy}%"
       ></div>
     </div>
+
+    <!-- Mode Buttons Moved to Top -->
+    <div class="grid grid-cols-2 gap-2 pt-1">
+      <button 
+        on:click={() => { isHardMode = false; initGame(true); }}
+        class="py-1.5 rounded-xl font-black text-[11px] transition-all { !isHardMode ? 'bg-white text-indigo-600 shadow-sm border border-indigo-100' : 'text-gray-400 bg-slate-100 dark:bg-gray-800 dark:text-gray-500' }">
+        일반 모드
+      </button>
+      <button 
+        on:click={() => { isHardMode = true; initGame(true); }}
+        class="py-1.5 rounded-xl font-black text-[11px] transition-all { isHardMode ? 'bg-red-500 text-white shadow-md' : 'text-gray-400 bg-slate-100 dark:bg-gray-800 dark:text-gray-500' }">
+        하드 모드 🔥
+      </button>
+    </div>
   </div>
 
   <div class="flex-1 min-h-0 w-full flex items-center justify-center relative {isShaking ? 'shake-animation' : ''}">
-    <div class="bg-indigo-200 dark:bg-gray-700 p-2.5 rounded-[2.5rem] shadow-2xl border-4 border-white">
-      <div class="grid grid-cols-7 gap-1 bg-white/40 rounded-[2rem] p-2">
+    <!-- Board Wrapper: Constrained by height and width to prevent overflow -->
+    <div class="max-h-full w-[96%] aspect-[7/9] mx-auto bg-indigo-200 dark:bg-gray-700 p-1 rounded-[1.5rem] shadow-2xl border-2 border-white flex flex-col justify-center">
+      <div class="grid grid-cols-7 gap-px bg-white/40 rounded-[1.2rem] p-1 w-full h-full">
         {#each grid as row, r}
           {#each row as cell, c}
-            <div class="w-10 h-10 xs:w-11 xs:h-11 sm:w-12 sm:h-12 flex items-center justify-center relative">
+            <div class="w-full aspect-square flex items-center justify-center relative">
               {#if cell}
                 <button 
-                  class="w-full h-full flex items-center justify-center text-2xl bg-white dark:bg-gray-800 rounded-xl shadow-md active:scale-75 transition-all duration-200"
+                  class="w-full h-full flex items-center justify-center text-3xl xs:text-4xl sm:text-5xl bg-white dark:bg-gray-800 rounded-md shadow-sm active:scale-75 transition-all duration-200"
                   on:click={() => handleCellClick(r, c)}
                   in:fly={{ y: -30, duration: 400, easing: bounceOut, delay: r * 15 }}
                 >
@@ -269,10 +286,10 @@
 
     {#if gameOver}
       <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 rounded-[2.5rem] backdrop-blur-md" in:fade>
-        <span class="text-7xl mb-4">😵</span>
-        <h2 class="text-4xl font-black text-white mb-2">게임 종료!</h2>
-        <p class="text-indigo-300 font-bold text-xl mb-8">{score} 점 획득!</p>
-        <button on:click={() => initGame()} class="bg-white text-indigo-600 px-10 py-4 rounded-2xl font-black shadow-2xl active:scale-95 transition-all">
+        <span class="text-6xl mb-4">😵</span>
+        <h2 class="text-3xl font-black text-white mb-2">게임 종료!</h2>
+        <p class="text-indigo-300 font-bold text-xl mb-6">{score} 점 획득!</p>
+        <button on:click={() => initGame()} class="bg-white text-indigo-600 px-8 py-3 rounded-2xl font-black shadow-2xl active:scale-95 transition-all">
           다시 도전하기
         </button>
       </div>
@@ -294,24 +311,7 @@
     </div>
   </div>
 
-  <div class="w-full max-w-[300px] flex flex-col gap-3 pb-4">
-    <div class="grid grid-cols-2 gap-3 p-1.5 bg-slate-200 dark:bg-gray-800 rounded-[1.8rem]">
-      <button 
-        on:click={() => { isHardMode = false; initGame(true); }}
-        class="py-3 rounded-[1.4rem] font-black text-[13px] transition-all { !isHardMode ? 'bg-white text-indigo-600 shadow-md' : 'text-gray-500' }">
-        일반 모드
-      </button>
-      <button 
-        on:click={() => { isHardMode = true; initGame(true); }}
-        class="py-3 rounded-[1.4rem] font-black text-[13px] transition-all { isHardMode ? 'bg-red-500 text-white shadow-lg' : 'text-gray-500' }">
-        하드 모드 🔥
-      </button>
-    </div>
-
-    <button on:click={() => initGame()} class="w-full bg-slate-900 dark:bg-slate-100 dark:text-black text-white py-4.5 rounded-[1.8rem] font-black text-lg shadow-xl active:scale-95 transition-all">
-      새 게임 시작
-    </button>
-  </div>
+  <!-- Footer removed -->
 </div>
 
 <style>
