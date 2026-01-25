@@ -32,22 +32,30 @@
   const popSoundPath = `${base}/sounds/pop.mp3`;
 
   // 사운드 재생 함수: 중첩 차단 로직 적용
-  // 사운드 재생 함수: 단순화
+  // 사운드 재생 함수: 0.1초만 재생 (스프라이트 문제 해결)
   function playPop(type = 'normal') {
     if (isMuted) return;
     
-    // 이전 소리가 있다면 즉시 정지 및 제거 (선택적)
+    // 이전 소리가 있다면 즉시 정지 및 제거
     if (currentAudio) {
       currentAudio.pause();
       currentAudio = null;
     }
 
     const s = new Audio(popSoundPath);
-    s.currentTime = 0; // 처음부터 재생
+    s.currentTime = 0; 
     s.volume = 0.4;
     
     currentAudio = s;
     s.play().catch(() => {});
+
+    // 0.1초 후에 강제 정지
+    setTimeout(() => {
+      if (currentAudio === s) {
+        s.pause();
+        currentAudio = null;
+      }
+    }, 100);
   }
 
   function startEnergyDrain() {
@@ -286,7 +294,7 @@
     </div>
   </div>
 
-  <div class="w-full max-w-[300px] flex flex-col gap-3 pb-8">
+  <div class="w-full max-w-[300px] flex flex-col gap-3 pb-4">
     <div class="grid grid-cols-2 gap-3 p-1.5 bg-slate-200 dark:bg-gray-800 rounded-[1.8rem]">
       <button 
         on:click={() => { isHardMode = false; initGame(true); }}
