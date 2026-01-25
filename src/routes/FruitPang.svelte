@@ -32,32 +32,22 @@
   const popSoundPath = `${base}/sounds/pop.mp3`;
 
   // 사운드 재생 함수: 중첩 차단 로직 적용
+  // 사운드 재생 함수: 단순화
   function playPop(type = 'normal') {
     if (isMuted) return;
     
-    // 이전 소리가 있다면 즉시 정지 및 제거
+    // 이전 소리가 있다면 즉시 정지 및 제거 (선택적)
     if (currentAudio) {
       currentAudio.pause();
       currentAudio = null;
     }
 
     const s = new Audio(popSoundPath);
-    const startTime = POP_START_TIMES[Math.floor(Math.random() * POP_START_TIMES.length)];
-    
-    s.currentTime = startTime;
-    s.playbackRate = type === 'bomb' ? 0.8 : (type === 'refill' ? 1.4 : 1.1);
+    s.currentTime = 0; // 처음부터 재생
     s.volume = 0.4;
     
     currentAudio = s;
     s.play().catch(() => {});
-    
-    // 0.15초만 짧게 재생하고 정지 (중첩 방지 핵심)
-    setTimeout(() => {
-      if (currentAudio === s) {
-        s.pause();
-        currentAudio = null;
-      }
-    }, 150); 
   }
 
   function startEnergyDrain() {
@@ -326,6 +316,6 @@
     30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
     40%, 60% { transform: translate3d(3px, 0, 0); }
   }
-  :global(body) { background-color: #f8fafc; margin: 0; padding: 0; overflow: hidden; }
+  :global(body) { background-color: #f8fafc; margin: 0; padding: 0; }
   button { -webkit-tap-highlight-color: transparent; outline: none; }
 </style>
