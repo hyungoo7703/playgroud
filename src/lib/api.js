@@ -56,4 +56,10 @@ export const api = {
     getComments: (post_id) => fetchFromGAS('getComments', { post_id }),
     addComment: (data) => fetchFromGAS('addComment', data),
     deleteComment: (id) => fetchFromGAS('deleteComment', { id }),
+
+    // Stocks
+    getStocks: () => fetchFromGAS('getStocks'),
+    addStock: (data) => fetchFromGAS('addStock', data),
+    batchAddStock: (items) => fetchFromGAS('batchAddStock', { items }),
+    deleteStock: (id) => fetchFromGAS('deleteStock', { id }),
 };
