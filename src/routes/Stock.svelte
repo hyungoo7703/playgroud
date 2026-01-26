@@ -3,6 +3,7 @@
     import { fade, slide } from "svelte/transition";
     import { api } from "../lib/api.js";
     import { navigate } from "svelte-routing";
+    import { currentUser } from "../lib/store.js";
 
     let stocks = [];
     let isLoading = true;
@@ -463,6 +464,7 @@
                                                 >
                                             </div>
                                             <div
+                                                <div
                                                 class="flex flex-col items-end"
                                             >
                                                 <span
@@ -478,13 +480,28 @@
                                                     ).toLocaleString()}</span
                                                 >
                                             </div>
-                                            {#if ["현구", "아빠"].includes("현구")}
+                                            {#if $currentUser === "현구"}
                                                 <button
                                                     on:click={() =>
                                                         deleteStock(stock.id)}
-                                                    class="text-gray-300 hover:text-red-500 ml-2 p-1"
-                                                    >x</button
+                                                    class="text-gray-400 hover:text-red-500 ml-2 p-2 transition-colors"
+                                                    title="삭제하기"
                                                 >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-4 w-4"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke="currentColor"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                        />
+                                                    </svg>
+                                                </button>
                                             {/if}
                                         </div>
                                     {/each}

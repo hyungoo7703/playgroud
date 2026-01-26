@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { fade, scale, slide } from "svelte/transition";
-  import { GAS_URL } from "../lib/store.js";
+  import { GAS_URL, currentUser } from "../lib/store.js"; // Import currentUser
 
   // --- 상태 관리 변수 ---
   let foodList = []; // 구글 시트에서 가져온 메뉴 리스트
@@ -12,6 +12,9 @@
   let responseult = "오늘 뭐 먹지?";
   let spinInterval;
   let isLoading = true; // 초기 로딩 상태
+
+  // Secret Admin State
+  let targetWinner = null;
 
   // --- 관리자/권한 관련 변수 ---
   let newItem = ""; // 추가할 새 메뉴 이름
@@ -94,8 +97,20 @@
     // 2.5초 후 멈춤
     setTimeout(() => {
       clearInterval(spinInterval);
-      const finalIndex = Math.floor(Math.random() * list.length);
-      responseult = list[finalIndex];
+
+      // Rigged Logic
+      if (
+        spinMode === "whoPay" &&
+        targetWinner &&
+        list.includes(targetWinner)
+      ) {
+        responseult = targetWinner;
+        // targetWinner = null; // Optional: Reset after win? Let's keep it manual for repeated trolling.
+      } else {
+        const finalIndex = Math.floor(Math.random() * list.length);
+        responseult = list[finalIndex];
+      }
+
       spinning = false;
       if (navigator.vibrate) navigator.vibrate([100, 30, 100]);
     }, 2500);
@@ -287,6 +302,31 @@
             </div>
           {/each}
         </div>
+
+        <!-- Secret Admin Logic (Only for Hyungoo) -->
+        {#if $currentUser === "현구"}
+          <div
+            class="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 opacity-30 hover:opacity-100 transition-opacity"
+          >
+            <p class="text-[10px] text-center text-slate-300 mb-2">
+              🤫 관리자 권한: 타겟 설정 (쉿!)
+            </p>
+            <div class="flex justify-center gap-2">
+              {#each WHO_PAY_MEMBERS as mem}
+                <button
+                  on:click={() =>
+                    (targetWinner = targetWinner === mem ? null : mem)}
+                  class="px-3 py-1 text-xs rounded-lg border transition-all {targetWinner ===
+                  mem
+                    ? 'bg-red-100 text-red-600 border-red-200'
+                    : 'bg-transparent border-slate-200 text-slate-400'}"
+                >
+                  {mem}
+                </button>
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
   </div>
